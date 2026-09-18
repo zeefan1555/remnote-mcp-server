@@ -151,7 +151,7 @@ describe('command bridge action mapping', () => {
     executeSpy.mockRestore();
   });
 
-  it('maps sdk-capabilities to get_sdk_capabilities', async () => {
+  it('maps sdk capabilities to get_sdk_capabilities', async () => {
     const result = {
       sdkVersion: '0.0.46',
       capabilities: [
@@ -167,12 +167,12 @@ describe('command bridge action mapping', () => {
         },
       ],
     };
-    const executeSpy = await runCommand(['sdk-capabilities', '--group', 'rem'], result);
+    const executeSpy = await runCommand(['sdk', 'capabilities', '--group', 'rem'], result);
     expect(executeSpy).toHaveBeenCalledWith('get_sdk_capabilities', {});
     executeSpy.mockRestore();
   });
 
-  it('maps an sdk-rem object command to sdk_call', async () => {
+  it('maps an sdk rem object command to sdk_call', async () => {
     const capabilities = {
       sdkVersion: '0.0.46',
       capabilities: [
@@ -189,7 +189,7 @@ describe('command bridge action mapping', () => {
       ],
     };
     const executeSpy = await runCommand(
-      ['sdk-rem', 'object-set-text', '--target-id', 'rem-1', '--args-json', '["Title"]'],
+      ['sdk', 'rem', 'object-set-text', '--target-id', 'rem-1', '--args-json', '["Title"]'],
       capabilities
     );
     expect(executeSpy).toHaveBeenNthCalledWith(1, 'get_sdk_capabilities', {});
@@ -220,7 +220,7 @@ describe('command bridge action mapping', () => {
       ],
     };
     const executeSpy = await runCommand(
-      ['sdk-messaging', 'broadcast', '--args-file', filePath],
+      ['sdk', 'messaging', 'broadcast', '--args-file', filePath],
       capabilities
     );
     expect(executeSpy).toHaveBeenNthCalledWith(1, 'get_sdk_capabilities', {});
@@ -248,7 +248,7 @@ describe('command bridge action mapping', () => {
       ],
     };
     const executeSpy = await runCommand(
-      ['sdk-card', 'object-remove', '--target-id', 'card-1', '--allow-destructive'],
+      ['sdk', 'card', 'object-remove', '--target-id', 'card-1', '--allow-destructive'],
       capabilities
     );
     expect(executeSpy).toHaveBeenNthCalledWith(2, 'sdk_call', {
@@ -288,7 +288,8 @@ describe('command bridge action mapping', () => {
         [
           'node',
           'remnote-cli',
-          'sdk-app',
+          'sdk',
+          'app',
           'get-platform',
           '--args-json',
           '[]',

@@ -124,7 +124,7 @@ export async function statusWorkflow(
   {
     const start = Date.now();
     try {
-      const result = (await ctx.cli.runExpectSuccess(['sdk-capabilities'])) as Record<
+      const result = (await ctx.cli.runExpectSuccess(['sdk', 'capabilities'])) as Record<
         string,
         unknown
       >;
@@ -145,7 +145,8 @@ export async function statusWorkflow(
         'platform capability should expose SDK signatures'
       );
       const callResult = (await ctx.cli.runExpectSuccess([
-        'sdk-app',
+        'sdk',
+        'app',
         'get-platform',
         '--args-json',
         '[]',

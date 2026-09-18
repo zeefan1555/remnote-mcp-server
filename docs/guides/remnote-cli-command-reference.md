@@ -245,29 +245,30 @@ JSON output preserves the raw card type, creation timestamp, repetition history,
 and consecutive wrong count. Text output provides a compact summary. The command does not calculate mastery or change
 the review schedule.
 
-## SDK command groups
+## SDK commands
 
-The Plugin SDK is organized as 19 first-level commands. Each second-level command maps to one bridge-advertised SDK
-capability:
+The Plugin SDK is available through one first-level `sdk` command. Its second level contains capability discovery and
+19 SDK namespaces; each third-level command maps to one bridge-advertised capability:
 
 ```text
-sdk-app        sdk-card       sdk-date       sdk-editor
-sdk-event      sdk-focus      sdk-kb         sdk-messaging
-sdk-powerup    sdk-queue      sdk-reader     sdk-rem
-sdk-rich-text  sdk-scheduler  sdk-search     sdk-settings
-sdk-storage    sdk-widget     sdk-window
+capabilities  app        card       date       editor
+event         focus      kb         messaging  powerup
+queue         reader     rem        rich-text   scheduler
+search        settings   storage    widget      window
 ```
 
-Use `sdk-capabilities` to search the full inventory. Running a group without a method lists that group's commands;
-adding `--help` to a method prints its SDK signature, mode, target requirements, unsupported reason, and example.
+Use `sdk capabilities` to search the full inventory. Running a namespace without a method lists that namespace's
+commands; adding `--help` to a method prints its SDK signature, mode, target requirements, unsupported reason, and
+example.
 
 ```bash
-remnote-cli sdk-capabilities --status supported --mode read --text
-remnote-cli sdk-rem
-remnote-cli sdk-rem object-collapse --help
-remnote-cli sdk-app get-platform --args-json '[]'
-remnote-cli sdk-rem object-collapse --target-id REM_ID --args-json '["PORTAL_ID"]'
-remnote-cli sdk-messaging broadcast --args-file ./args.json
+remnote-cli sdk --help
+remnote-cli sdk capabilities --status supported --mode read --text
+remnote-cli sdk rem
+remnote-cli sdk rem object-collapse --help
+remnote-cli sdk app get-platform --args-json '[]'
+remnote-cli sdk rem object-collapse --target-id REM_ID --args-json '["PORTAL_ID"]'
+remnote-cli sdk messaging broadcast --args-file ./args.json
 ```
 
 - Positional SDK arguments come from either `--args-json` or `--args-file`, never both.

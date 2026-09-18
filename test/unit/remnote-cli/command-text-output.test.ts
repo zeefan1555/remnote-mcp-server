@@ -221,7 +221,7 @@ describe('command text output', () => {
   });
 
   it('formats SDK capability discovery', async () => {
-    const { output, executeSpy } = await runTextCommand(['sdk-capabilities'], {
+    const { output, executeSpy } = await runTextCommand(['sdk', 'capabilities'], {
       sdkVersion: '0.0.46',
       capabilities: [
         {
@@ -239,7 +239,7 @@ describe('command text output', () => {
 
     expect(output).toContain('RemNote SDK 0.0.46: 1 capabilities');
     expect(output).toContain(
-      'sdk-rem object-get-text: capability=rem:getText status=supported mode=read'
+      'sdk rem object-get-text: capability=rem:getText status=supported mode=read'
     );
     executeSpy.mockRestore();
   });
@@ -262,12 +262,12 @@ describe('command text output', () => {
       ],
     };
 
-    const group = await runTextCommand(['sdk-rem'], capabilities);
-    expect(group.output).toContain('Usage: remnote-cli sdk-rem <command> [options]');
+    const group = await runTextCommand(['sdk', 'rem'], capabilities);
+    expect(group.output).toContain('Usage: remnote-cli sdk rem <command> [options]');
     expect(group.output).toContain('object-collapse');
     group.executeSpy.mockRestore();
 
-    const method = await runTextCommand(['sdk-rem', 'object-collapse', '--help'], capabilities);
+    const method = await runTextCommand(['sdk', 'rem', 'object-collapse', '--help'], capabilities);
     expect(method.output).toContain('Capability: rem:collapse');
     expect(method.output).toContain('collapse: (portalId: string) => Promise<boolean>');
     expect(method.output).toContain('--target-id REM_ID');
@@ -293,7 +293,7 @@ describe('command text output', () => {
       ],
     };
     const { output, executeSpy } = await runTextCommand(
-      ['sdk-event', 'add-listener', '--help'],
+      ['sdk', 'event', 'add-listener', '--help'],
       capabilities
     );
     expect(output).toContain('Status: unsupported');

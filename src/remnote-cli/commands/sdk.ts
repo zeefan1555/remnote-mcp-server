@@ -43,12 +43,12 @@ const SDK_GROUPS = [
 ] as const;
 
 function cliGroupName(group: string): string {
-  return `sdk-${group.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()}`;
+  return group.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
 function formatCapability(capability: Capability): string {
   const reason = capability.reason ? ` reason=${capability.reason}` : '';
-  return `${cliGroupName(capability.group)} ${capability.command}: capability=${capability.id} status=${capability.status} mode=${capability.mode}${reason}`;
+  return `sdk ${cliGroupName(capability.group)} ${capability.command}: capability=${capability.id} status=${capability.status} mode=${capability.mode}${reason}`;
 }
 
 function parseArgsJson(value: string): unknown[] {
@@ -72,9 +72,9 @@ function groupHelp(result: CapabilityResult, group: string): string {
     .filter((capability) => capability.group === group)
     .sort((left, right) => left.command.localeCompare(right.command));
   return [
-    `${commandName} - RemNote SDK ${result.sdkVersion}`,
+    `sdk ${commandName} - RemNote SDK ${result.sdkVersion}`,
     '',
-    `Usage: remnote-cli ${commandName} <command> [options]`,
+    `Usage: remnote-cli sdk ${commandName} <command> [options]`,
     '',
     'Commands:',
     ...capabilities.map(
@@ -82,7 +82,7 @@ function groupHelp(result: CapabilityResult, group: string): string {
         `  ${capability.command.padEnd(42)} ${capability.status}/${capability.mode}${capability.summary ? ` - ${capability.summary}` : ''}`
     ),
     '',
-    `Run "remnote-cli ${commandName} <command> --help" for exact SDK signatures and arguments.`,
+    `Run "remnote-cli sdk ${commandName} <command> --help" for exact SDK signatures and arguments.`,
   ].join('\n');
 }
 
@@ -90,6 +90,7 @@ function capabilityHelp(result: CapabilityResult, capability: Capability): strin
   const commandName = cliGroupName(capability.group);
   const example = [
     'remnote-cli',
+    'sdk',
     commandName,
     capability.command,
     ...(capability.target === 'rem'
@@ -103,7 +104,7 @@ function capabilityHelp(result: CapabilityResult, capability: Capability): strin
   ].join(' ');
 
   return [
-    `${commandName} ${capability.command}`,
+    `sdk ${commandName} ${capability.command}`,
     '',
     capability.summary ?? 'No SDK description is available.',
     '',
@@ -138,9 +139,9 @@ async function readArgs(opts: {
   return source === undefined ? undefined : parseArgsJson(source);
 }
 
-function registerCapabilityCatalog(program: Command): void {
-  program
-    .command('sdk-capabilities')
+function registerCapabilityCatalog(sdk: Command, program: Command): void {
+  sdk
+    .command('capabilities')
     .description('List and search RemNote Plugin SDK commands')
     .option('--group <group>', 'Filter by SDK command group')
     .option('--status <status>', 'Filter by exact status')
@@ -178,9 +179,14 @@ function registerCapabilityCatalog(program: Command): void {
     });
 }
 
-function registerCapabilityGroup(program: Command, group: string, description: string): void {
+function registerCapabilityGroup(
+  sdk: Command,
+  program: Command,
+  group: string,
+  description: string
+): void {
   const commandName = cliGroupName(group);
-  const sdkGroup = program
+  const sdkGroup = sdk
     .command(`${commandName} [method]`)
     .description(description)
     .helpOption(false)
@@ -203,14 +209,14 @@ function registerCapabilityGroup(program: Command, group: string, description: s
       const capability = result.capabilities.find(
         (candidate) => candidate.group === group && candidate.command === method
       );
-      if (!capability) throw new Error(`Unknown SDK command: ${commandName} ${method}`);
+      if (!capability) throw new Error(`Unknown SDK command: sdk ${commandName} ${method}`);
       if (opts.help) {
         console.log(capabilityHelp(result, capability));
         return;
       }
       if (capability.status !== 'supported') {
         throw new Error(
-          `Unsupported SDK command ${commandName} ${method}: ${capability.reason ?? 'no executable CLI path'}`
+          `Unsupported SDK command sdk ${commandName} ${method}: ${capability.reason ?? 'no executable CLI path'}`
         );
       }
 
@@ -231,8 +237,10 @@ function registerCapabilityGroup(program: Command, group: string, description: s
 }
 
 export function registerSdkCommands(program: Command): void {
-  registerCapabilityCatalog(program);
+  const sdk = program.command('sdk').description('Low-level RemNote Plugin SDK access');
+  sdk.action(() => sdk.outputHelp());
+  registerCapabilityCatalog(sdk, program);
   for (const [group, description] of SDK_GROUPS) {
-    registerCapabilityGroup(program, group, description);
+    registerCapabilityGroup(sdk, program, group, description);
   }
 }

@@ -64,7 +64,7 @@ If any precondition is missing, stop and fix setup first.
 ## Read-First Safety Policy
 
 - Default to read-only flows: `status`, `search`, `search-by-tag`, `read`, `review-stats`, `read-table`, and
-  `sdk-capabilities`.
+  `sdk capabilities`.
 - Do not run mutating commands by default.
 - For writes (`create`, `update`, `set-document-status`, `insert-children`, `replace-children`, `update-tags`,
   `set-property`, `journal`), require the exact phrase `confirm write` from the user in the same turn.
@@ -125,11 +125,11 @@ If any precondition is missing, stop and fix setup first.
 - Search by exact tag Rem ID: `remnote-cli search-by-tag --tag-id <tag-rem-id>`
 - Read note by Rem ID: `remnote-cli read <rem-id>`
 - Read native card review facts: `remnote-cli review-stats <rem-id> [more-rem-ids...]`
-- Discover Plugin SDK capabilities: `remnote-cli sdk-capabilities --status supported --text`
-- List one SDK group and its generated method names: `remnote-cli sdk-rem`
-- Inspect one command before calling it: `remnote-cli sdk-rem object-get-children-rem --help`
+- Discover Plugin SDK capabilities: `remnote-cli sdk capabilities --status supported --text`
+- List one SDK group and its generated method names: `remnote-cli sdk rem`
+- Inspect one command before calling it: `remnote-cli sdk rem object-get-children-rem --help`
 - Invoke an uncovered SDK operation through its namespace group:
-  `remnote-cli sdk-rem object-get-children-rem --target-id <rem-id> --args-json '[]'`
+  `remnote-cli sdk rem object-get-children-rem --target-id <rem-id> --args-json '[]'`
   - Prefer the friendly commands above when one exists.
   - Use `--allow-destructive` only for explicit user intent after checking the discovered capability mode.
 - Discover embedded image IDs: `remnote-cli read <rem-id> --include-media-metadata`

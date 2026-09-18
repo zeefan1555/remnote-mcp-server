@@ -7,6 +7,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Nest Plugin SDK discovery and all 19 namespaces under the single `remnote-cli sdk` command, replacing the former
+  `sdk-capabilities` and `sdk-*` root commands without compatibility aliases.
+
 ## [0.19.0] - 2026-09-18
 
 ### Added
