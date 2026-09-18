@@ -6,6 +6,7 @@ import { SearchSchema } from '../schemas/remnote-schemas.js';
 import { SearchByTagSchema } from '../schemas/remnote-schemas.js';
 import { ReadNoteSchema } from '../schemas/remnote-schemas.js';
 import { ReviewStatsSchema } from '../schemas/remnote-schemas.js';
+import { GetSdkCapabilitiesSchema, SdkCallSchema } from '../schemas/remnote-schemas.js';
 import { GetMediaSchema } from '../schemas/remnote-schemas.js';
 import { UpdateNoteSchema } from '../schemas/remnote-schemas.js';
 import { SetDocumentStatusSchema } from '../schemas/remnote-schemas.js';
@@ -1343,6 +1344,92 @@ export const REVIEW_STATS_TOOL = {
   },
 };
 
+export const GET_SDK_CAPABILITIES_TOOL = {
+  name: 'remnote_get_sdk_capabilities',
+  description:
+    'List the RemNote Plugin SDK capabilities exposed by the connected bridge, including their remnote-cli group and command names, signatures, status, mode, and any unavailability reason.',
+  inputSchema: {
+    type: 'object' as const,
+    properties: {},
+    additionalProperties: false,
+  },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      sdkVersion: { type: 'string', description: 'RemNote Plugin SDK version' },
+      capabilities: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Stable capability ID used by remnote_sdk_call' },
+            target: { type: 'string', description: 'SDK target kind' },
+            namespace: { type: 'string', description: 'SDK namespace when applicable' },
+            method: { type: 'string', description: 'SDK method name' },
+            group: { type: 'string', description: 'remnote-cli SDK command group' },
+            command: { type: 'string', description: 'Second-level remnote-cli command name' },
+            signatures: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Public SDK declaration signatures',
+            },
+            summary: { type: 'string', description: 'SDK documentation summary when available' },
+            status: { type: 'string', description: 'Capability availability status' },
+            mode: { type: 'string', description: 'Capability safety or invocation mode' },
+            reason: { type: 'string', description: 'Reason the capability is unavailable' },
+          },
+          required: ['id', 'target', 'method', 'group', 'command', 'signatures', 'status', 'mode'],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ['sdkVersion', 'capabilities'],
+    additionalProperties: false,
+  },
+};
+
+export const SDK_CALL_TOOL = {
+  name: 'remnote_sdk_call',
+  description:
+    'Invoke one capability returned by remnote_get_sdk_capabilities. Arguments are positional JSON values. Destructive capabilities require allowDestructive=true.',
+  inputSchema: {
+    type: 'object' as const,
+    properties: {
+      capability: {
+        type: 'string',
+        minLength: 1,
+        description: 'Capability ID returned by remnote_get_sdk_capabilities',
+      },
+      targetId: {
+        type: 'string',
+        minLength: 1,
+        description: 'Target Rem or SDK object ID when required by the capability',
+      },
+      args: {
+        type: 'array',
+        maxItems: 100,
+        items: {},
+        description: 'Positional JSON arguments, limited to 100 items and 100 KB',
+      },
+      allowDestructive: {
+        type: 'boolean',
+        description: 'Explicitly allow a capability marked destructive (default: false)',
+      },
+    },
+    required: ['capability'],
+    additionalProperties: false,
+  },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      capability: { type: 'string', description: 'Invoked capability ID' },
+      value: { description: 'JSON-compatible value returned by the RemNote Plugin SDK' },
+    },
+    required: ['capability', 'value'],
+    additionalProperties: false,
+  },
+};
+
 export const PLAYBOOK_TOOL = {
   name: 'remnote_get_playbook',
   description:
@@ -1426,6 +1513,8 @@ export const ALL_TOOLS = [
   STATUS_TOOL,
   READ_TABLE_TOOL,
   REVIEW_STATS_TOOL,
+  GET_SDK_CAPABILITIES_TOOL,
+  SDK_CALL_TOOL,
 ] as const;
 
 export function registerAllTools(
@@ -1512,6 +1601,18 @@ export function registerAllTools(
         case 'remnote_get_review_stats': {
           const args = ReviewStatsSchema.parse(request.params.arguments);
           result = await wsServer.sendRequest('get_review_stats', args);
+          break;
+        }
+
+        case 'remnote_get_sdk_capabilities': {
+          const args = GetSdkCapabilitiesSchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('get_sdk_capabilities', args);
+          break;
+        }
+
+        case 'remnote_sdk_call': {
+          const args = SdkCallSchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('sdk_call', args);
           break;
         }
 
@@ -1617,9 +1718,9 @@ export function registerAllTools(
           }
 
           result = {
-            playbookVersion: '1.10.0',
+            playbookVersion: '1.11.0',
             summary:
-              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, inspect native card review facts, retrieve managed images, choose compact/full output views, and apply safe metadata writes including real aliases, exact inline [[id:<remId>]] references, tag property values, and dry-run-first document status changes.',
+              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, inspect native card review facts, discover optional Plugin SDK capabilities, retrieve managed images, choose compact/full output views, and apply safe metadata writes including real aliases, exact inline [[id:<remId>]] references, tag property values, and dry-run-first document status changes.',
             recommendedStatusCheck: {
               tool: 'remnote_status',
               cadence: 'recommended once per session and before risky writes',
@@ -1639,6 +1740,7 @@ export function registerAllTools(
               'Need to traverse a specific branch cheaply? Use remnote_list_children on the parentRemId and page through direct children.',
               'Need to read a selected subtree? Use remnote_read_note on a chosen remId with contentMode="structured", depth=1, childLimit=500, then deepen selected branches.',
               'Need evidence about whether existing flashcards have been reviewed? Use remnote_get_review_stats with their exact Rem IDs and interpret the returned native repetition history and scheduling fields; do not infer mastery from search hits or note age.',
+              'Need a Plugin SDK operation without a friendly tool? Call remnote_get_sdk_capabilities, select an available capability ID, then call remnote_sdk_call with positional JSON args and targetId when required. Prefer friendly tools when they exist, and never enable allowDestructive without explicit user intent.',
               'Need to follow inline graph references? Inspect inlineRefs on search/read results and structured child nodes for exact target Rem IDs.',
               'Need tabular/structured data from an Advanced Table? Use remnote_read_table with either tableTitle or tableRemId. Use propertyFilter to limit columns for large tables.',
               'Need a human-readable summary? Switch to contentMode="markdown" on search/read results.',
@@ -1682,6 +1784,7 @@ export function registerAllTools(
                 'All production tag writes use exact tag Rem IDs: create_note.tagRemIds, append_journal.tagRemIds, and update_tags add/remove arrays.',
                 'Markdown-capable write fields support [[id:<remId>]] to create real inline references to existing Rems without name lookup.',
                 'remnote_set_property writes exact-ID tag/table property values and requires acceptWriteOperations=true.',
+                'remnote_sdk_call is an advanced escape hatch: inspect capability status and mode first; destructive capabilities require allowDestructive=true and explicit user intent.',
               ],
             },
             currentStatus,

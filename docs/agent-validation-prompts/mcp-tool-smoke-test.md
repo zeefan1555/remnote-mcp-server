@@ -17,6 +17,8 @@ This smoke test requires:
 - `remnote_create_note`
 - `remnote_read_note`
 - `remnote_get_review_stats`
+- `remnote_get_sdk_capabilities`
+- `remnote_sdk_call`
 - `remnote_get_media`
 - `remnote_list_children`
 - `remnote_update_note`
@@ -65,6 +67,10 @@ Resolve all three by exact title and derive all Rem, property, field, and media 
    - Confirm the playbook mentions exact inline Rem references with `[[id:<remId>]]`.
    - Confirm the playbook describes managed-image retrieval and real alias writes.
    - Confirm the playbook recommends `remnote_get_review_stats` when review evidence is needed.
+   - Confirm the playbook recommends SDK capability discovery before generic calls and explicit intent for destructive
+     capabilities.
+   - Call `remnote_get_sdk_capabilities`; confirm `sdkVersion` and `capabilities` are present and every capability has
+     `id`, `target`, `method`, generated CLI `group` and `command`, `signatures`, `status`, and `mode`.
 
 3. Resolve the shared temporary integration-test root.
    - Search for the exact title `RemNote Automation Bridge [temporary integration test data]`.
@@ -94,6 +100,8 @@ Resolve all three by exact title and derive all Rem, property, field, and media 
      `kind: "rem"`.
    - Dry-run `remnote_set_document_status` on the run note with `isDocument: true` and `expectedOldRemType` set to the
      current `remType`; confirm `dryRun` is true and the same Rem ID is returned.
+   - Confirm `namespace:app.getPlatform` is available, then call `remnote_sdk_call` with that capability, `args: []`,
+     and `allowDestructive: false`. Confirm the returned `capability` matches and `value` is a platform string.
 
 7. Rename the run note with `remnote_update_note`.
    - New title: `[MCP-AGENT-TEST] Tool smoke test updated <current ISO timestamp> [[id:<root note Rem ID>]]`

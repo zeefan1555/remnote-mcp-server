@@ -24,13 +24,15 @@ When changing action names, payloads, or response semantics, validate this repo 
 
 ## Contract Map (Current)
 
-### External MCP Tool Surface (18)
+### External MCP Tool Surface (20)
 
 - `remnote_create_note`
 - `remnote_search`
 - `remnote_search_by_tag`
 - `remnote_read_note`
 - `remnote_get_review_stats`
+- `remnote_get_sdk_capabilities`
+- `remnote_sdk_call`
 - `remnote_get_media`
 - `remnote_list_children`
 - `remnote_move_note`
@@ -52,6 +54,8 @@ When changing action names, payloads, or response semantics, validate this repo 
 - `remnote-cli search-by-tag`
 - `remnote-cli read`
 - `remnote-cli review-stats`
+- `remnote-cli sdk-capabilities`
+- `remnote-cli sdk-app|card|date|editor|event|focus|kb|messaging|powerup|queue|reader|rem|rich-text|scheduler|search|settings|storage|widget|window <method>`
 - `remnote-cli get-media`
 - `remnote-cli list-children`
 - `remnote-cli move-note`
@@ -66,11 +70,13 @@ When changing action names, payloads, or response semantics, validate this repo 
 
 ### Bridge Action Mapping and Compatibility
 
-- Most tools map to same conceptual bridge actions (`create_note`, `search`, `search_by_tag`, `read_note`, `get_review_stats`, `get_media_locator`,
+- Most tools map to same conceptual bridge actions (`create_note`, `search`, `search_by_tag`, `read_note`, `get_review_stats`, `get_sdk_capabilities`, `sdk_call`, `get_media_locator`,
   `list_children`, `move_note`, `update_note`, `set_document_status`, `insert_children`, `replace_children`, `update_tags`,
   `set_property`, `append_journal`, `read_table`, `get_status`).
 - Bridge plugin sends WebSocket `hello` with plugin version.
 - `remnote_status` enriches output with server version + optional `version_warning` for compatibility drift.
+- `remnote_get_sdk_capabilities` and `remnote_sdk_call` remain the shared transport for the 19 generated `sdk-*` CLI
+  command groups; keep friendly task-level tools for established workflows.
 
 Projects are still `0.x`; prefer the same minor line across bridge and server package:
 

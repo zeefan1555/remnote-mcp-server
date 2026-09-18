@@ -10,6 +10,8 @@ import {
   SearchByTagSchema,
   ReadNoteSchema,
   ReviewStatsSchema,
+  GetSdkCapabilitiesSchema,
+  SdkCallSchema,
   UpdateNoteSchema,
   SetDocumentStatusSchema,
   InsertChildrenSchema,
@@ -19,6 +21,37 @@ import {
   AppendJournalSchema,
   ReadTableSchema,
 } from '../../src/schemas/remnote-schemas.js';
+
+describe('SDK schemas', () => {
+  it('accepts capability discovery and bounded JSON call arguments', () => {
+    expect(GetSdkCapabilitiesSchema.parse({})).toEqual({});
+    expect(GetSdkCapabilitiesSchema.parse(undefined)).toEqual({});
+    expect(
+      SdkCallSchema.parse({
+        capability: 'rem.get-text',
+        targetId: 'rem-1',
+        args: ['text', 1, true, null, { nested: ['value'] }],
+      })
+    ).toEqual({
+      capability: 'rem.get-text',
+      targetId: 'rem-1',
+      args: ['text', 1, true, null, { nested: ['value'] }],
+      allowDestructive: false,
+    });
+  });
+
+  it('rejects non-array, non-JSON, oversized, and unknown SDK call input', () => {
+    expect(() => SdkCallSchema.parse({ capability: 'x', args: {} })).toThrow();
+    expect(() =>
+      SdkCallSchema.parse({ capability: 'x', args: [Number.POSITIVE_INFINITY] })
+    ).toThrow();
+    expect(() => SdkCallSchema.parse({ capability: 'x', args: ['x'.repeat(100 * 1024)] })).toThrow(
+      'exceed 100 KB'
+    );
+    expect(() => SdkCallSchema.parse({ capability: 'x', extra: true })).toThrow();
+    expect(() => GetSdkCapabilitiesSchema.parse({ extra: true })).toThrow();
+  });
+});
 
 describe('ReviewStatsSchema', () => {
   it('accepts one or more non-empty Rem IDs', () => {

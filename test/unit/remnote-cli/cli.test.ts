@@ -22,6 +22,13 @@ describe('createProgram', () => {
     expect(commandNames).not.toContain('search-tag');
     expect(commandNames).toContain('read');
     expect(commandNames).toContain('get-media');
+    expect(commandNames).not.toContain('sdk');
+    expect(commandNames).toContain('sdk-capabilities');
+    expect(commandNames).toContain('sdk-app');
+    expect(commandNames).toContain('sdk-rem');
+    expect(commandNames).toContain('sdk-rich-text');
+    expect(commandNames).toContain('sdk-window');
+    expect(commandNames.filter((name) => name.startsWith('sdk-'))).toHaveLength(20);
     expect(commandNames).toContain('update');
     expect(commandNames).toContain('set-document-status');
     expect(commandNames).toContain('journal');

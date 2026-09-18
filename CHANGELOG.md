@@ -7,8 +7,13 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-09-18
+
 ### Added
 
+- Add bridge-advertised RemNote Plugin SDK access through `remnote_get_sdk_capabilities`, `remnote_sdk_call`, and 19
+  first-level `remnote-cli sdk-*` command groups whose second-level names map to SDK capabilities. Generated help shows
+  SDK signatures, safety modes, unsupported reasons, and bounded JSON argument usage.
 - Add `remnote_get_review_stats` and `remnote-cli review-stats` for reading native card repetition history and
   scheduling facts without inventing a separate mastery score.
 - Add real RemNote alias writes through `remnote_create_note`, `remnote_update_note`, `remnote-cli create`, and

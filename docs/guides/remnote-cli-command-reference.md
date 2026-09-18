@@ -15,7 +15,7 @@ remnote-mcp-server
 ```
 
 Bridge actions (`create`, `search`, `search-by-tag`, `read`, `get-media`, `list-children`, `move-note`, `update`,
-`review-stats`, `set-document-status`, `insert-children`, `replace-children`, `update-tags`, `set-property`, `journal`,
+`review-stats`, `sdk`, `set-document-status`, `insert-children`, `replace-children`, `update-tags`, `set-property`, `journal`,
 `read-table`, `status`) also require RemNote with the RemNote Automation Bridge plugin connected to that MCP server.
 
 ## Global Options
@@ -244,6 +244,40 @@ remnote-cli review-stats <rem-id> [more-rem-ids...]
 JSON output preserves the raw card type, creation timestamp, repetition history, last and next repetition timestamps,
 and consecutive wrong count. Text output provides a compact summary. The command does not calculate mastery or change
 the review schedule.
+
+## SDK command groups
+
+The Plugin SDK is organized as 19 first-level commands. Each second-level command maps to one bridge-advertised SDK
+capability:
+
+```text
+sdk-app        sdk-card       sdk-date       sdk-editor
+sdk-event      sdk-focus      sdk-kb         sdk-messaging
+sdk-powerup    sdk-queue      sdk-reader     sdk-rem
+sdk-rich-text  sdk-scheduler  sdk-search     sdk-settings
+sdk-storage    sdk-widget     sdk-window
+```
+
+Use `sdk-capabilities` to search the full inventory. Running a group without a method lists that group's commands;
+adding `--help` to a method prints its SDK signature, mode, target requirements, unsupported reason, and example.
+
+```bash
+remnote-cli sdk-capabilities --status supported --mode read --text
+remnote-cli sdk-rem
+remnote-cli sdk-rem object-collapse --help
+remnote-cli sdk-app get-platform --args-json '[]'
+remnote-cli sdk-rem object-collapse --target-id REM_ID --args-json '["PORTAL_ID"]'
+remnote-cli sdk-messaging broadcast --args-file ./args.json
+```
+
+- Positional SDK arguments come from either `--args-json` or `--args-file`, never both.
+- Argument files/stdin are UTF-8 and capped at 100 KB; the server also limits calls to 100 JSON arguments.
+- RemObject and Card methods require `--target-id`.
+- Prefer friendly commands when they cover the workflow.
+- Use `--allow-destructive` only after explicit user intent and only for a command whose help reports
+  `Mode: destructive`.
+- Callback, event-listener, scheduler, Widget registration, and stateful RichTextBuilder capabilities remain
+  discoverable but report `unsupported` because they cannot cross a one-shot JSON command boundary.
 
 ## get-media
 

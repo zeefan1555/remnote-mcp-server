@@ -220,6 +220,88 @@ describe('command text output', () => {
     executeSpy.mockRestore();
   });
 
+  it('formats SDK capability discovery', async () => {
+    const { output, executeSpy } = await runTextCommand(['sdk-capabilities'], {
+      sdkVersion: '0.0.46',
+      capabilities: [
+        {
+          id: 'rem:getText',
+          target: 'rem',
+          method: 'getText',
+          group: 'rem',
+          command: 'object-get-text',
+          signatures: ['getText: () => Promise<RichTextInterface>'],
+          status: 'supported',
+          mode: 'read',
+        },
+      ],
+    });
+
+    expect(output).toContain('RemNote SDK 0.0.46: 1 capabilities');
+    expect(output).toContain(
+      'sdk-rem object-get-text: capability=rem:getText status=supported mode=read'
+    );
+    executeSpy.mockRestore();
+  });
+
+  it('shows generated SDK group and method help', async () => {
+    const capabilities = {
+      sdkVersion: '0.0.46',
+      capabilities: [
+        {
+          id: 'rem:collapse',
+          target: 'rem',
+          method: 'collapse',
+          group: 'rem',
+          command: 'object-collapse',
+          signatures: ['collapse: (portalId: string) => Promise<boolean>'],
+          summary: 'Collapse this Rem in a portal.',
+          status: 'supported',
+          mode: 'write',
+        },
+      ],
+    };
+
+    const group = await runTextCommand(['sdk-rem'], capabilities);
+    expect(group.output).toContain('Usage: remnote-cli sdk-rem <command> [options]');
+    expect(group.output).toContain('object-collapse');
+    group.executeSpy.mockRestore();
+
+    const method = await runTextCommand(['sdk-rem', 'object-collapse', '--help'], capabilities);
+    expect(method.output).toContain('Capability: rem:collapse');
+    expect(method.output).toContain('collapse: (portalId: string) => Promise<boolean>');
+    expect(method.output).toContain('--target-id REM_ID');
+    method.executeSpy.mockRestore();
+  });
+
+  it('shows unsupported SDK method help without invoking it', async () => {
+    const capabilities = {
+      sdkVersion: '0.0.46',
+      capabilities: [
+        {
+          id: 'namespace:event.addListener',
+          target: 'namespace',
+          namespace: 'event',
+          method: 'addListener',
+          group: 'event',
+          command: 'add-listener',
+          signatures: ['addListener: (event: string, callback: CallbackFn) => void'],
+          status: 'unsupported',
+          mode: 'write',
+          reason: 'Event listeners require a persistent callback.',
+        },
+      ],
+    };
+    const { output, executeSpy } = await runTextCommand(
+      ['sdk-event', 'add-listener', '--help'],
+      capabilities
+    );
+    expect(output).toContain('Status: unsupported');
+    expect(output).toContain('Reason: Event listeners require a persistent callback.');
+    expect(executeSpy).toHaveBeenCalledTimes(1);
+    executeSpy.mockRestore();
+  });
+
   it('formats search results with aliases and parent title without parent ID', async () => {
     const { output, executeSpy } = await runTextCommand(['search', 'plan'], {
       results: [

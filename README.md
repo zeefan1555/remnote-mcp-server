@@ -173,7 +173,7 @@ After installing the LaunchAgent, `remnote-mcp-server daemon status|start|stop|r
 
 - **[remnote-mcp-server Command Reference](docs/guides/remnote-mcp-server-command-reference.md)** - Server executable, daemon, and launchd options
 - **[remnote-cli Command Reference](docs/guides/remnote-cli-command-reference.md)** - Shell command reference for the bundled CLI
-- **[MCP Tools Reference](docs/guides/tools-reference.md)** - Detailed reference for all 9 RemNote tools
+- **[MCP Tools Reference](docs/guides/tools-reference.md)** - Detailed reference for all RemNote tools
 - **[Remote Access Setup](docs/guides/remote-access.md)** - Expose server for cloud clients or remote connector flows
   (ngrok, etc.)
 
@@ -199,6 +199,8 @@ After installing the LaunchAgent, `remnote-mcp-server daemon status|start|stop|r
 | `remnote_search_by_tag`   | Search by exact tag Rem ID with ancestor-context resolution |
 | `remnote_read_note`       | Read note by ID with metadata, optional tag IDs/names, and markdown or structured content |
 | `remnote_get_review_stats` | Read native review history and scheduling facts for cards from exact Rem IDs |
+| `remnote_get_sdk_capabilities` | Discover bridge-advertised RemNote Plugin SDK capabilities |
+| `remnote_sdk_call`         | Invoke a discovered SDK capability with bounded JSON arguments |
 | `remnote_get_media`       | Retrieve one validated RemNote-managed image as MCP-native image content |
 | `remnote_update_note`     | Update title and add/remove real aliases |
 | `remnote_set_document_status` | Preview or set document status while preserving concept/card status |

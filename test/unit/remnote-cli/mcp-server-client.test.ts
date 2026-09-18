@@ -73,6 +73,8 @@ describe('McpServerClient', () => {
   it.each([
     ['list_children', 'remnote_list_children', { parentRemId: 'parent123' }],
     ['move_note', 'remnote_move_note', { remId: 'rem123', newParentRemId: 'parent123' }],
+    ['get_sdk_capabilities', 'remnote_get_sdk_capabilities', {}],
+    ['sdk_call', 'remnote_sdk_call', { capability: 'rem.get-text', targetId: 'rem123' }],
     [
       'set_document_status',
       'remnote_set_document_status',

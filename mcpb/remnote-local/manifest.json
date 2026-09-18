@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "remnote-local",
   "display_name": "RemNote Local",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "Use a locally running RemNote MCP Server from Claude Desktop or Cowork without a public HTTPS tunnel.",
   "long_description": "RemNote Local is a Claude Desktop extension that exposes RemNote MCP tools over stdio and forwards calls to a local remnote-mcp-server Streamable HTTP endpoint. It can also be used by Claude Cowork in Claude Desktop when desktop extensions are enabled. Start remnote-mcp-server and keep the RemNote Automation Bridge plugin connected before using the tools.",
   "author": { "name": "Robert Spiegel", "email": "nightingale7@gmail.com" },
@@ -91,6 +91,14 @@
     {
       "name": "remnote_get_review_stats",
       "description": "Read native RemNote review facts for every card generated from one or more exact Rem IDs. Returns raw scheduling and repetition history only; it does not calculate a custom mastery score."
+    },
+    {
+      "name": "remnote_get_sdk_capabilities",
+      "description": "List the RemNote Plugin SDK capabilities exposed by the connected bridge, including their remnote-cli group and command names, signatures, status, mode, and any unavailability reason."
+    },
+    {
+      "name": "remnote_sdk_call",
+      "description": "Invoke one capability returned by remnote_get_sdk_capabilities. Arguments are positional JSON values. Destructive capabilities require allowDestructive=true."
     }
   ],
   "tools_generated": true,

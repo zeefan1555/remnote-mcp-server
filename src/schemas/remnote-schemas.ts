@@ -1,5 +1,20 @@
 import { z } from 'zod';
 
+type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
+
+const JsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
+  z.union([
+    z.null(),
+    z.boolean(),
+    z.number().finite(),
+    z.string(),
+    z.array(JsonValueSchema),
+    z.record(z.string(), JsonValueSchema),
+  ])
+);
+
+const MAX_SDK_ARGS_BYTES = 100 * 1024;
+
 const ContentModeSchema = z.enum(['none', 'markdown', 'structured']);
 const ViewSchema = z.enum(['compact', 'standard', 'full']);
 const RemClassificationSchema = z.enum([
@@ -181,6 +196,29 @@ export const ReviewStatsSchema = z
       .describe('Rem IDs whose generated cards should be inspected'),
   })
   .strict();
+
+export const GetSdkCapabilitiesSchema = z.object({}).strict().default({});
+
+export const SdkCallSchema = z
+  .object({
+    capability: z.string().min(1).describe('Capability ID returned by get_sdk_capabilities'),
+    targetId: z.string().min(1).optional().describe('Target Rem or SDK object ID when required'),
+    args: z.array(JsonValueSchema).max(100).default([]).describe('Positional JSON arguments'),
+    allowDestructive: z
+      .boolean()
+      .default(false)
+      .describe('Explicitly allow a capability marked destructive'),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if (Buffer.byteLength(JSON.stringify(value.args), 'utf8') > MAX_SDK_ARGS_BYTES) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'sdk_call args exceed 100 KB limit',
+        path: ['args'],
+      });
+    }
+  });
 
 export const GetMediaSchema = z
   .object({

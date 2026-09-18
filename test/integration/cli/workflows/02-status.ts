@@ -120,5 +120,55 @@ export async function statusWorkflow(
     }
   }
 
+  // Step 5: SDK capability discovery is available through the CLI
+  {
+    const start = Date.now();
+    try {
+      const result = (await ctx.cli.runExpectSuccess(['sdk-capabilities'])) as Record<
+        string,
+        unknown
+      >;
+      assertHasField(result, 'sdkVersion', 'SDK capability result');
+      assertHasField(result, 'capabilities', 'SDK capability result');
+      assertTruthy(typeof result.sdkVersion === 'string', 'sdkVersion should be a string');
+      assertTruthy(Array.isArray(result.capabilities), 'capabilities should be an array');
+      const platformCapability = (result.capabilities as Array<Record<string, unknown>>).find(
+        (capability) => capability.id === 'namespace:app.getPlatform'
+      );
+      assertTruthy(platformCapability, 'namespace:app.getPlatform should be discoverable');
+      assertTruthy(
+        platformCapability.group === 'app' && platformCapability.command === 'get-platform',
+        'platform capability should expose its generated CLI command'
+      );
+      assertTruthy(
+        Array.isArray(platformCapability.signatures),
+        'platform capability should expose SDK signatures'
+      );
+      const callResult = (await ctx.cli.runExpectSuccess([
+        'sdk-app',
+        'get-platform',
+        '--args-json',
+        '[]',
+      ])) as Record<string, unknown>;
+      assertTruthy(
+        callResult.capability === 'namespace:app.getPlatform',
+        'SDK call should echo the capability ID'
+      );
+      assertTruthy(typeof callResult.value === 'string', 'SDK platform should be a string');
+      steps.push({
+        label: 'Plugin SDK capability discovery and read call work',
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: 'Plugin SDK capability discovery and read call work',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
   return { name: 'Status Check', steps, skipped: false };
 }

@@ -635,4 +635,46 @@ export const FALLBACK_TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: 'remnote_get_sdk_capabilities',
+    description:
+      'List the RemNote Plugin SDK capabilities exposed by the connected bridge, including their remnote-cli group and command names, signatures, status, mode, and any unavailability reason.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'remnote_sdk_call',
+    description:
+      'Invoke one capability returned by remnote_get_sdk_capabilities. Arguments are positional JSON values. Destructive capabilities require allowDestructive=true.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        capability: {
+          type: 'string',
+          minLength: 1,
+          description: 'Capability ID returned by remnote_get_sdk_capabilities',
+        },
+        targetId: {
+          type: 'string',
+          minLength: 1,
+          description: 'Target Rem or SDK object ID when required by the capability',
+        },
+        args: {
+          type: 'array',
+          maxItems: 100,
+          items: {},
+          description: 'Positional JSON arguments, limited to 100 items and 100 KB',
+        },
+        allowDestructive: {
+          type: 'boolean',
+          description: 'Explicitly allow a capability marked destructive (default: false)',
+        },
+      },
+      required: ['capability'],
+      additionalProperties: false,
+    },
+  },
 ];

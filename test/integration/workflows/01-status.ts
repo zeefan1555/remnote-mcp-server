@@ -150,5 +150,55 @@ export async function statusWorkflow(
     }
   }
 
+  // Step 6: SDK capability discovery is available
+  {
+    const start = Date.now();
+    try {
+      const result = await ctx.client.callTool('remnote_get_sdk_capabilities');
+      assertHasField(result, 'sdkVersion', 'SDK capability response');
+      assertHasField(result, 'capabilities', 'SDK capability response');
+      assertTruthy(typeof result.sdkVersion === 'string', 'sdkVersion should be a string');
+      assertTruthy(Array.isArray(result.capabilities), 'capabilities should be an array');
+      const platformCapability = (result.capabilities as Array<Record<string, unknown>>).find(
+        (capability) => capability.id === 'namespace:app.getPlatform'
+      );
+      assertTruthy(platformCapability, 'namespace:app.getPlatform should be discoverable');
+      assertTruthy(
+        platformCapability.group === 'app' && platformCapability.command === 'get-platform',
+        'platform capability should expose its generated CLI command'
+      );
+      assertTruthy(
+        Array.isArray(platformCapability.signatures),
+        'platform capability should expose SDK signatures'
+      );
+      assertTruthy(
+        platformCapability.status === 'supported',
+        'namespace:app.getPlatform should be discoverable'
+      );
+      const callResult = await ctx.client.callTool('remnote_sdk_call', {
+        capability: 'namespace:app.getPlatform',
+        args: [],
+        allowDestructive: false,
+      });
+      assertTruthy(
+        callResult.capability === 'namespace:app.getPlatform',
+        'SDK call should echo the capability ID'
+      );
+      assertTruthy(typeof callResult.value === 'string', 'SDK platform should be a string');
+      steps.push({
+        label: 'Plugin SDK capability discovery and read call work',
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: 'Plugin SDK capability discovery and read call work',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
   return { name: 'Status Check', steps, skipped: false };
 }

@@ -151,6 +151,165 @@ describe('command bridge action mapping', () => {
     executeSpy.mockRestore();
   });
 
+  it('maps sdk-capabilities to get_sdk_capabilities', async () => {
+    const result = {
+      sdkVersion: '0.0.46',
+      capabilities: [
+        {
+          id: 'rem:getText',
+          target: 'rem',
+          method: 'getText',
+          group: 'rem',
+          command: 'object-get-text',
+          signatures: ['getText: () => Promise<RichTextInterface>'],
+          status: 'supported',
+          mode: 'read',
+        },
+      ],
+    };
+    const executeSpy = await runCommand(['sdk-capabilities', '--group', 'rem'], result);
+    expect(executeSpy).toHaveBeenCalledWith('get_sdk_capabilities', {});
+    executeSpy.mockRestore();
+  });
+
+  it('maps an sdk-rem object command to sdk_call', async () => {
+    const capabilities = {
+      sdkVersion: '0.0.46',
+      capabilities: [
+        {
+          id: 'rem:setText',
+          target: 'rem',
+          method: 'setText',
+          group: 'rem',
+          command: 'object-set-text',
+          signatures: ['setText: (text: RichTextInterface) => Promise<void>'],
+          status: 'supported',
+          mode: 'write',
+        },
+      ],
+    };
+    const executeSpy = await runCommand(
+      ['sdk-rem', 'object-set-text', '--target-id', 'rem-1', '--args-json', '["Title"]'],
+      capabilities
+    );
+    expect(executeSpy).toHaveBeenNthCalledWith(1, 'get_sdk_capabilities', {});
+    expect(executeSpy).toHaveBeenNthCalledWith(2, 'sdk_call', {
+      capability: 'rem:setText',
+      targetId: 'rem-1',
+      args: ['Title'],
+    });
+    executeSpy.mockRestore();
+  });
+
+  it('maps an SDK namespace command args file to sdk_call', async () => {
+    const filePath = await createTempContentFile('[{"value":1}]');
+    const capabilities = {
+      sdkVersion: '0.0.46',
+      capabilities: [
+        {
+          id: 'namespace:messaging.broadcast',
+          target: 'namespace',
+          namespace: 'messaging',
+          method: 'broadcast',
+          group: 'messaging',
+          command: 'broadcast',
+          signatures: ['broadcast: (message: unknown) => Promise<void>'],
+          status: 'supported',
+          mode: 'read',
+        },
+      ],
+    };
+    const executeSpy = await runCommand(
+      ['sdk-messaging', 'broadcast', '--args-file', filePath],
+      capabilities
+    );
+    expect(executeSpy).toHaveBeenNthCalledWith(1, 'get_sdk_capabilities', {});
+    expect(executeSpy).toHaveBeenNthCalledWith(2, 'sdk_call', {
+      capability: 'namespace:messaging.broadcast',
+      args: [{ value: 1 }],
+    });
+    executeSpy.mockRestore();
+  });
+
+  it('passes explicit destructive approval through an SDK command', async () => {
+    const capabilities = {
+      sdkVersion: '0.0.46',
+      capabilities: [
+        {
+          id: 'card:remove',
+          target: 'card',
+          method: 'remove',
+          group: 'card',
+          command: 'object-remove',
+          signatures: ['remove: () => Promise<void>'],
+          status: 'supported',
+          mode: 'destructive',
+        },
+      ],
+    };
+    const executeSpy = await runCommand(
+      ['sdk-card', 'object-remove', '--target-id', 'card-1', '--allow-destructive'],
+      capabilities
+    );
+    expect(executeSpy).toHaveBeenNthCalledWith(2, 'sdk_call', {
+      capability: 'card:remove',
+      targetId: 'card-1',
+      allowDestructive: true,
+    });
+    executeSpy.mockRestore();
+  });
+
+  it('rejects conflicting SDK argument sources before calling sdk_call', async () => {
+    const filePath = await createTempContentFile('[]');
+    const executeSpy = vi.spyOn(McpServerClient.prototype, 'execute').mockResolvedValue({
+      sdkVersion: '0.0.46',
+      capabilities: [
+        {
+          id: 'namespace:app.getPlatform',
+          target: 'namespace',
+          namespace: 'app',
+          method: 'getPlatform',
+          group: 'app',
+          command: 'get-platform',
+          signatures: ['getPlatform: () => Promise<Platform>'],
+          status: 'supported',
+          mode: 'read',
+        },
+      ],
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const originalExit = process.exit;
+    process.exit = vi.fn() as never;
+    const program = createProgram('0.1.0-test');
+
+    try {
+      await program.parseAsync(
+        [
+          'node',
+          'remnote-cli',
+          'sdk-app',
+          'get-platform',
+          '--args-json',
+          '[]',
+          '--args-file',
+          filePath,
+        ],
+        { from: 'node' }
+      );
+      expect(executeSpy).toHaveBeenCalledTimes(1);
+      expect(errSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Cannot use --args-json and --args-file together')
+      );
+      expect(process.exit).toHaveBeenCalledWith(1);
+    } finally {
+      process.exit = originalExit;
+      logSpy.mockRestore();
+      errSpy.mockRestore();
+      executeSpy.mockRestore();
+    }
+  });
+
   it('passes through structured read content mode', async () => {
     const executeSpy = await runCommand(['read', 'abc123', '--content-mode', 'structured']);
     expect(executeSpy).toHaveBeenCalledWith('read_note', {

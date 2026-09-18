@@ -20,6 +20,8 @@ JSON in a top-level `content` text block for compatibility with older clients an
 | `remnote_search_by_tag` | Search by exact tag Rem ID | Finding ancestor context for tagged notes |
 | `remnote_read_note` | Read note content | Retrieving details, reading hierarchies |
 | `remnote_get_review_stats` | Read native card review facts | Incremental learning and review-state inspection |
+| `remnote_get_sdk_capabilities` | Discover Plugin SDK capabilities | Find bridge-supported operations without guessing method names |
+| `remnote_sdk_call` | Invoke a discovered Plugin SDK capability | Advanced operations without a friendly task-level tool |
 | `remnote_get_media` | Retrieve managed image content | Fetching an embedded RemNote image by stable metadata ID |
 | `remnote_list_children` | List direct child Rems | Cheap branch traversal without subtree rendering |
 | `remnote_update_note` | Update note metadata | Renaming and additive/removal alias changes |
@@ -394,6 +396,34 @@ mastery score or modify the scheduler.
   "remIds": ["abc123", "def456"]
 }
 ```
+
+## remnote_get_sdk_capabilities
+
+List the RemNote Plugin SDK capabilities exposed by the connected bridge. The result includes `sdkVersion` and a
+capability catalog containing `id`, `target`, optional `namespace`, `method`, generated CLI `group` and `command`,
+`signatures`, optional `summary`, `status`, `mode`, and optional `reason`. Use the exact returned `id` with
+`remnote_sdk_call`; do not construct capability IDs from SDK method names.
+
+### Parameters
+
+None.
+
+## remnote_sdk_call
+
+Invoke one capability returned by `remnote_get_sdk_capabilities`. Prefer the existing friendly MCP tools for common
+workflows; this generic tool is the escape hatch for the remaining bridge-advertised Plugin SDK surface.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `capability` | string | Yes | Exact capability ID returned by discovery |
+| `targetId` | string | No | Target Rem or SDK object ID when required |
+| `args` | JSON[] | No | Positional JSON arguments; maximum 100 items and 100 KB |
+| `allowDestructive` | boolean | No | Explicit opt-in for destructive capabilities; defaults to `false` |
+
+Always inspect the capability `status` and `mode` first. Set `allowDestructive: true` only when the user explicitly
+requested the destructive operation.
 
 ## remnote_get_media
 

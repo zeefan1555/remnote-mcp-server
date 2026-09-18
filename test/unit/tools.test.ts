@@ -27,6 +27,8 @@ import {
   STATUS_TOOL,
   READ_TABLE_TOOL,
   REVIEW_STATS_TOOL,
+  GET_SDK_CAPABILITIES_TOOL,
+  SDK_CALL_TOOL,
   ALL_TOOLS,
 } from '../../src/tools/index.js';
 import { WebSocketServer } from '../../src/websocket-server.js';
@@ -487,6 +489,15 @@ describe('Tool Definitions', () => {
     expect(REVIEW_STATS_TOOL.inputSchema.properties.remIds).toBeDefined();
     expect(REVIEW_STATS_TOOL.outputSchema.properties.results).toBeDefined();
   });
+
+  it('should expose generic SDK discovery and invocation tools', () => {
+    expect(GET_SDK_CAPABILITIES_TOOL.name).toBe('remnote_get_sdk_capabilities');
+    expect(GET_SDK_CAPABILITIES_TOOL.outputSchema.properties.capabilities).toBeDefined();
+    expect(SDK_CALL_TOOL.name).toBe('remnote_sdk_call');
+    expect(SDK_CALL_TOOL.inputSchema.required).toEqual(['capability']);
+    expect(SDK_CALL_TOOL.inputSchema.properties.args).toBeDefined();
+    expect(SDK_CALL_TOOL.inputSchema.properties.allowDestructive).toBeDefined();
+  });
 });
 
 describe('Tool Registration', () => {
@@ -508,14 +519,14 @@ describe('Tool Registration', () => {
     expect(mockServer.hasHandler(ListToolsRequestSchema)).toBe(true);
   });
 
-  it('should return all 18 tools in list', async () => {
+  it('should return all 20 tools in list', async () => {
     registerAllTools(mockServer as never, mockWsServer as never, createMockLogger());
 
     const result = (await mockServer.callHandler(ListToolsRequestSchema, {})) as {
       tools: unknown[];
     };
 
-    expect(result.tools).toHaveLength(18);
+    expect(result.tools).toHaveLength(20);
   });
 
   it('should include all tool names in list', async () => {
@@ -531,6 +542,8 @@ describe('Tool Registration', () => {
     expect(names).toContain('remnote_search_by_tag');
     expect(names).toContain('remnote_read_note');
     expect(names).toContain('remnote_get_review_stats');
+    expect(names).toContain('remnote_get_sdk_capabilities');
+    expect(names).toContain('remnote_sdk_call');
     expect(names).toContain('remnote_get_media');
     expect(names).toContain('remnote_update_note');
     expect(names).toContain('remnote_set_document_status');
@@ -542,6 +555,54 @@ describe('Tool Registration', () => {
     expect(names).toContain('remnote_get_playbook');
     expect(names).toContain('remnote_status');
     expect(names).toContain('remnote_read_table');
+  });
+});
+
+describe('Tool Handlers - sdk', () => {
+  it('discovers capabilities and forwards bounded SDK calls', async () => {
+    const mockServer = new MockMCPServer();
+    const capabilities = {
+      sdkVersion: '0.19.0',
+      capabilities: [
+        {
+          id: 'rem:getText',
+          target: 'rem',
+          method: 'getText',
+          group: 'rem',
+          command: 'object-get-text',
+          signatures: ['getText: () => Promise<RichTextInterface>'],
+          status: 'supported',
+          mode: 'read',
+        },
+      ],
+    };
+    const mockWsServer = {
+      sendRequest: vi.fn().mockResolvedValueOnce(capabilities).mockResolvedValueOnce({
+        capability: 'rem:getText',
+        value: 'Title',
+      }),
+    };
+    registerAllTools(mockServer as never, mockWsServer as never, createMockLogger() as never);
+
+    const discovery = (await mockServer.callHandler(CallToolRequestSchema, {
+      params: { name: 'remnote_get_sdk_capabilities', arguments: {} },
+    })) as ToolSuccessResult;
+    expect(mockWsServer.sendRequest).toHaveBeenNthCalledWith(1, 'get_sdk_capabilities', {});
+    expectStructuredToolResult(discovery, capabilities);
+
+    const call = (await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_sdk_call',
+        arguments: { capability: 'rem:getText', targetId: 'rem-1' },
+      },
+    })) as ToolSuccessResult;
+    expect(mockWsServer.sendRequest).toHaveBeenNthCalledWith(2, 'sdk_call', {
+      capability: 'rem:getText',
+      targetId: 'rem-1',
+      args: [],
+      allowDestructive: false,
+    });
+    expectStructuredToolResult(call, { capability: 'rem:getText', value: 'Title' });
   });
 });
 
@@ -1525,7 +1586,7 @@ describe('Tool Handlers - get_playbook', () => {
       params: { name: 'remnote_get_playbook', arguments: {} },
     })) as ToolSuccessResult;
 
-    expect(result.structuredContent?.playbookVersion).toBe('1.10.0');
+    expect(result.structuredContent?.playbookVersion).toBe('1.11.0');
     expect(Array.isArray(result.structuredContent?.decisionTree)).toBe(true);
     expect((result.structuredContent?.decisionTree as unknown[])?.length).toBeGreaterThan(0);
     expect(result.structuredContent?.decisionTree).toContain(
