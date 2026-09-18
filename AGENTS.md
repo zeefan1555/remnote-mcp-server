@@ -140,23 +140,25 @@ wrapper.
 - Allowed path for AI agents: `./run-agent-integration-test.sh [--yes]`, which validates the direct MCP tools path,
   MCPB stdio proxy path, and bundled CLI path by default. Use `--suite mcp`, `--suite mcpb`, or `--suite cli` only for
   targeted reruns.
-- Before invoking the wrapper, the agent must ask the human collaborator to start the bridge in RemNote.
-- If bridge code changed after the currently running RemNote bridge session started, the agent must ask the human
-  collaborator to restart the bridge before rerunning the suite.
+- Before invoking the wrapper, ensure the matching bridge is active in RemNote. If the user explicitly grants
+  full-operation authority, the agent may load or reload the localhost bridge through Computer Use; otherwise ask the
+  human collaborator.
+- If bridge code changed after the current RemNote bridge session started, reload it before rerunning the suite.
 - Before invoking any live integration command, the agent must run
   `./run-agent-integration-test.sh --preflight-only` outside the Codex sandbox to check whether the configured HTTP MCP
-  port is occupied (`127.0.0.1:3001` by default). If anything is listening there, including a macOS launchd-managed
-  server, the agent must refuse to run the tests and report that Robert needs to stop the existing server first. The
-  agent must not stop or restart any existing `remnote-mcp-server` process or macOS launchd service.
-- The wrapper repeats the configured HTTP MCP port check before build/start. If the port is already occupied, it must
-  refuse to run and must not stop or restart any existing `remnote-mcp-server` process or macOS launchd service.
+  port is occupied (`127.0.0.1:3001` by default). Identify the listener before continuing. Under full-operation
+  authority, record whether the confirmed project-owned `com.remnote.mcp-server` launchd service was running, stop it
+  with the repository CLI, run the guarded suite, and restore it afterward. Never stop an unknown listener or an
+  unrelated service.
+- The wrapper repeats the configured HTTP MCP port check before build/start and still fails closed if the port remains
+  occupied after the authorized lifecycle step.
 - If the port is free, the wrapper builds and starts its own local MCP server, then waits for
   `remnote_status.connected === true` before launching the suite.
 - Agent-assisted live integration commands must be run outside the Codex sandbox with escalated execution. The `tsx`
   runners create local IPC pipes under macOS temp directories such as `/var/folders/...`; inside the sandbox this can
   fail before tests start with `listen EPERM`.
-- After each agent-assisted integration run, whether it passes, fails, or is interrupted, the agent must stop the MCP
-  server if and only if the wrapper started it for that run.
+- After each agent-assisted integration run, whether it passes, fails, or is interrupted, stop the MCP server if and
+  only if the wrapper started it, then restore the previously running project-owned daemon when applicable.
 - If the bridge never connects, the wrapper must stop and tell the human collaborator to verify the RemNote bridge
   session.
 - Use unit/static checks for routine agent-side verification when explicit live validation is not requested.
