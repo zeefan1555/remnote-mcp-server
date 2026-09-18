@@ -16,10 +16,13 @@ JSON in a top-level `content` text block for compatibility with older clients an
 | Tool | Description | Use Case |
 |------|-------------|----------|
 | `remnote_create_note` | Create new notes or flashcards | Adding new knowledge, ideas, references, or flashcards. Supports hierarchical markdown, real aliases, exact tag Rem IDs, and optional root document status. |
-| `remnote_search` | Search knowledge base | Finding existing notes, exploring topics |
+| `remnote_search` | Search knowledge base | Finding notes or card candidates with optional review facts |
 | `remnote_search_by_tag` | Search by exact tag Rem ID | Finding ancestor context for tagged notes |
 | `remnote_read_note` | Read note content | Retrieving details, reading hierarchies |
-| `remnote_get_review_stats` | Read native card review facts | Incremental learning and review-state inspection |
+| `remnote_get_review_stats` | Read native card review facts | Review-state inspection by IDs, root, tag, or today |
+| `remnote_set_outline_collapsed` | Collapse or expand an outline | Verified bulk folding with dry-run support |
+| `remnote_list_todos` | List tagged todos | Read exact-tag tasks and native checkbox state |
+| `remnote_update_todo` | Complete or reopen a todo | Atomically synchronize native state and TODO/DONE tags |
 | `remnote_get_sdk_capabilities` | Discover Plugin SDK capabilities | Find bridge-supported operations without guessing method names |
 | `remnote_sdk_call` | Invoke a discovered Plugin SDK capability | Advanced operations without a friendly task-level tool |
 | `remnote_get_media` | Retrieve managed image content | Fetching an embedded RemNote image by stable metadata ID |
@@ -163,6 +166,8 @@ Search your RemNote knowledge base with full-text search.
 | `includeMediaMetadata` | boolean | No | Include ordered root image metadata for follow-up retrieval |
 | `depth` | number | No | Max child depth for rendered content (0-10, default: 1) |
 | `parentRemId` | string | No | Non-empty Rem ID to scope search within this Rem's subtree |
+| `cardsOnly` | boolean | No | Return only Rems that generate one or more cards |
+| `includeReviewStats` | boolean | No | Include native card repetition and scheduling facts on each result |
 
 ### Usage
 
@@ -381,11 +386,14 @@ instead of markdown `content`. Leaf nodes omit `children` rather than returning 
 
 ## remnote_get_review_stats
 
-Read RemNote's native review facts for every card generated from one or more exact Rem IDs.
+Read RemNote's native review facts for cards selected by exactly one scope.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `remIds` | string[] | Yes | One to 100 exact source Rem IDs |
+| `remIds` | string[] | Conditional | One to 100 exact source Rem IDs |
+| `rootRemId` | string | Conditional | This Rem and all descendants |
+| `tagRemId` | string | Conditional | Directly tagged Rems and all descendants |
+| `today` | boolean | Conditional | Today's daily document and all descendants; pass `true` |
 
 The response keeps RemNote's raw card type, creation time, repetition history, last and next repetition times, and
 consecutive wrong count. A Rem with no generated cards returns an empty `cards` array. The tool does not infer a custom
@@ -396,6 +404,23 @@ mastery score or modify the scheduler.
   "remIds": ["abc123", "def456"]
 }
 ```
+
+## remnote_set_outline_collapsed
+
+Preview or update the collapsed state of every non-leaf Rem in one document/portal context. Provide exactly one of
+`rootRemId` or `today: true`; `dryRun` defaults to `true`. Applied changes require write operations and are verified
+inside one Bridge transaction.
+
+## remnote_list_todos
+
+List Rems carrying an exact TODO tag and include `isTodo` plus native `todoStatus` when the Rem uses RemNote's checkbox
+state. Input: `tagRemId`.
+
+## remnote_update_todo
+
+Preview or atomically complete/reopen one Rem. The action updates native todo status when present, adds the destination
+tag, removes the source tag, and verifies both. Inputs: `remId`, `finished`, `todoTagRemId`, `doneTagRemId`, and optional
+`dryRun` (default `true`).
 
 ## remnote_get_sdk_capabilities
 

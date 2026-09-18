@@ -220,6 +220,36 @@ describe('command text output', () => {
     executeSpy.mockRestore();
   });
 
+  it('formats outline and todo workflow results', async () => {
+    const outline = await runTextCommand(['outline', 'collapse', '--today'], {
+      rootRemId: 'daily-1',
+      rootTitle: 'Today',
+      collapsed: true,
+      dryRun: true,
+      scanned: 10,
+      eligible: 3,
+      changed: 2,
+      items: [],
+    });
+    expect(outline.output).toContain('Preview collapse for Today [daily-1]');
+    expect(outline.output).toContain('changed=2');
+    outline.executeSpy.mockRestore();
+
+    const todos = await runTextCommand(['todo', 'list', '--tag-id', 'todo-tag'], {
+      tagRemId: 'todo-tag',
+      todos: [
+        {
+          remId: 'todo-1',
+          title: 'Finish task',
+          isTodo: true,
+          todoStatus: 'Unfinished',
+        },
+      ],
+    });
+    expect(todos.output).toContain('Finish task [todo-1] native=Unfinished');
+    todos.executeSpy.mockRestore();
+  });
+
   it('formats SDK capability discovery', async () => {
     const { output, executeSpy } = await runTextCommand(['sdk', 'capabilities'], {
       sdkVersion: '0.0.46',
@@ -316,6 +346,31 @@ describe('command text output', () => {
     });
 
     expect(output).toBe('1. [concept] Plan (aka: Strategy, Roadmap) <- Workspace [rem-1]');
+    executeSpy.mockRestore();
+  });
+
+  it('formats card search review counts', async () => {
+    const { output, executeSpy } = await runTextCommand(
+      ['search', 'TQQQ', '--cards-only', '--include-review-stats'],
+      {
+        results: [
+          {
+            remId: 'card-rem-1',
+            title: 'What is TQQQ?',
+            headline: 'What is TQQQ?',
+            remType: 'text',
+            cards: [
+              {
+                cardId: 'card-1',
+                repetitionHistory: [{ date: 100, score: 1 }],
+              },
+            ],
+          },
+        ],
+      }
+    );
+
+    expect(output).toContain('cards: 1, repetitions: 1');
     executeSpy.mockRestore();
   });
 

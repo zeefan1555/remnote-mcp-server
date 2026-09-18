@@ -90,7 +90,19 @@
     },
     {
       "name": "remnote_get_review_stats",
-      "description": "Read native RemNote review facts for every card generated from one or more exact Rem IDs. Returns raw scheduling and repetition history only; it does not calculate a custom mastery score."
+      "description": "Read native RemNote review facts for cards selected by exact Rem IDs, a root subtree, a tag subtree, or today's daily document. Returns raw scheduling and repetition history only; it does not calculate a custom mastery score."
+    },
+    {
+      "name": "remnote_set_outline_collapsed",
+      "description": "Preview or update collapsed state for every non-leaf Rem in a document/portal subtree or today's daily document, then verify each changed Rem in the same portal context."
+    },
+    {
+      "name": "remnote_list_todos",
+      "description": "List Rems carrying an exact TODO tag, including their native RemNote todo state when present."
+    },
+    {
+      "name": "remnote_update_todo",
+      "description": "Preview or atomically complete/reopen one Rem by updating its native todo status when present and swapping exact TODO/DONE tags."
     },
     {
       "name": "remnote_get_sdk_capabilities",

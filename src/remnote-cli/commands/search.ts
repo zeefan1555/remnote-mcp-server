@@ -77,7 +77,21 @@ function formatSearchText(data: unknown): string {
           .filter(Boolean)
           .join(' <- ')}`;
       }
-      return `${i + 1}. ${typeTag}${headline}${aliasesSuffix}${tagsSuffix}${parentSuffix}${ancestorSuffix} [${note.remId}]`;
+      let reviewSuffix = '';
+      if (Array.isArray(note.cards)) {
+        const repetitions = note.cards.reduce(
+          (total, card) =>
+            total +
+            (card &&
+            typeof card === 'object' &&
+            Array.isArray((card as Record<string, unknown>).repetitionHistory)
+              ? ((card as Record<string, unknown>).repetitionHistory as unknown[]).length
+              : 0),
+          0
+        );
+        reviewSuffix = ` | cards: ${note.cards.length}, repetitions: ${repetitions}`;
+      }
+      return `${i + 1}. ${typeTag}${headline}${aliasesSuffix}${tagsSuffix}${parentSuffix}${ancestorSuffix}${reviewSuffix} [${note.remId}]`;
     })
     .join('\n');
 
@@ -120,6 +134,8 @@ export function registerSearchCommand(program: Command): void {
   )
     .option('--cursor <cursor>', 'Opaque cursor returned by a previous search page')
     .option('--parent-id <remId>', "Optional. Scope search to within this Rem's subtree")
+    .option('--cards-only', 'Return only Rems that generate cards')
+    .option('--include-review-stats', 'Include native card review facts for each result')
     .action(async (query: string, opts) => {
       const globalOpts = program.opts();
       const format: OutputFormat = globalOpts.text ? 'text' : 'json';
@@ -132,6 +148,8 @@ export function registerSearchCommand(program: Command): void {
         };
         if (opts.cursor) payload.cursor = opts.cursor;
         if (opts.parentId) payload.parentRemId = opts.parentId;
+        if (opts.cardsOnly) payload.cardsOnly = true;
+        if (opts.includeReviewStats) payload.includeReviewStats = true;
         applySearchOptions(payload, opts);
 
         const result = await client.execute('search', payload);

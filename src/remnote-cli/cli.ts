@@ -23,6 +23,8 @@ import { registerReadTableCommand } from './commands/table.js';
 import { registerGetMediaCommand } from './commands/media.js';
 import { registerReviewStatsCommand } from './commands/review-stats.js';
 import { registerSdkCommands } from './commands/sdk.js';
+import { registerOutlineCommand } from './commands/outline.js';
+import { registerTodoCommand } from './commands/todo.js';
 
 const require = createRequire(import.meta.url);
 const packageJson = require('../../package.json') as { version: string };
@@ -49,6 +51,8 @@ export function createProgram(version: string): Command {
   registerListChildrenCommand(program);
   registerReadCommand(program);
   registerReviewStatsCommand(program);
+  registerOutlineCommand(program);
+  registerTodoCommand(program);
   registerSdkCommands(program);
   registerGetMediaCommand(program);
   registerUpdateCommand(program);

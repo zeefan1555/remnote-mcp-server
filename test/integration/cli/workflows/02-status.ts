@@ -171,5 +171,38 @@ export async function statusWorkflow(
     }
   }
 
+  // Step 6: scoped review and outline preview are available through high-level CLI commands
+  {
+    const start = Date.now();
+    try {
+      const reviewStats = (await ctx.cli.runExpectSuccess(['review-stats', '--today'])) as Record<
+        string,
+        unknown
+      >;
+      assertHasField(reviewStats, 'results', 'today review stats');
+      assertTruthy(Array.isArray(reviewStats.results), 'today review stats should be an array');
+
+      const outline = (await ctx.cli.runExpectSuccess([
+        'outline',
+        'collapse',
+        '--today',
+      ])) as Record<string, unknown>;
+      assertTruthy(outline.dryRun === true, 'outline should default to dry-run');
+      assertTruthy(typeof outline.eligible === 'number', 'outline eligible should be a number');
+      steps.push({
+        label: 'Scoped review and outline preview work',
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: 'Scoped review and outline preview work',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
   return { name: 'Status Check', steps, skipped: false };
 }

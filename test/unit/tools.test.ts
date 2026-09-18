@@ -27,6 +27,9 @@ import {
   STATUS_TOOL,
   READ_TABLE_TOOL,
   REVIEW_STATS_TOOL,
+  SET_OUTLINE_COLLAPSED_TOOL,
+  LIST_TODOS_TOOL,
+  UPDATE_TODO_TOOL,
   GET_SDK_CAPABILITIES_TOOL,
   SDK_CALL_TOOL,
   ALL_TOOLS,
@@ -488,6 +491,15 @@ describe('Tool Definitions', () => {
     expect(REVIEW_STATS_TOOL.name).toBe('remnote_get_review_stats');
     expect(REVIEW_STATS_TOOL.inputSchema.properties.remIds).toBeDefined();
     expect(REVIEW_STATS_TOOL.outputSchema.properties.results).toBeDefined();
+    expect(REVIEW_STATS_TOOL.inputSchema.properties.rootRemId).toBeDefined();
+    expect(REVIEW_STATS_TOOL.inputSchema.properties.tagRemId).toBeDefined();
+    expect(REVIEW_STATS_TOOL.inputSchema.properties.today).toBeDefined();
+  });
+
+  it('should expose outline and todo workflow tools', () => {
+    expect(SET_OUTLINE_COLLAPSED_TOOL.name).toBe('remnote_set_outline_collapsed');
+    expect(LIST_TODOS_TOOL.name).toBe('remnote_list_todos');
+    expect(UPDATE_TODO_TOOL.name).toBe('remnote_update_todo');
   });
 
   it('should expose generic SDK discovery and invocation tools', () => {
@@ -519,14 +531,14 @@ describe('Tool Registration', () => {
     expect(mockServer.hasHandler(ListToolsRequestSchema)).toBe(true);
   });
 
-  it('should return all 20 tools in list', async () => {
+  it('should return all 23 tools in list', async () => {
     registerAllTools(mockServer as never, mockWsServer as never, createMockLogger());
 
     const result = (await mockServer.callHandler(ListToolsRequestSchema, {})) as {
       tools: unknown[];
     };
 
-    expect(result.tools).toHaveLength(20);
+    expect(result.tools).toHaveLength(23);
   });
 
   it('should include all tool names in list', async () => {
@@ -542,6 +554,9 @@ describe('Tool Registration', () => {
     expect(names).toContain('remnote_search_by_tag');
     expect(names).toContain('remnote_read_note');
     expect(names).toContain('remnote_get_review_stats');
+    expect(names).toContain('remnote_set_outline_collapsed');
+    expect(names).toContain('remnote_list_todos');
+    expect(names).toContain('remnote_update_todo');
     expect(names).toContain('remnote_get_sdk_capabilities');
     expect(names).toContain('remnote_sdk_call');
     expect(names).toContain('remnote_get_media');
@@ -623,6 +638,72 @@ describe('Tool Handlers - review_stats', () => {
       validReviewStatsInput
     );
     expectStructuredToolResult(result, sampleReviewStatsResult);
+  });
+
+  it("forwards today's review scope", async () => {
+    const mockServer = new MockMCPServer();
+    const mockWsServer = {
+      sendRequest: vi.fn().mockResolvedValue({ results: [] }),
+    };
+    registerAllTools(mockServer as never, mockWsServer as never, createMockLogger() as never);
+
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: { name: 'remnote_get_review_stats', arguments: { today: true } },
+    });
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('get_review_stats', { today: true });
+  });
+});
+
+describe('Tool Handlers - outline and todo', () => {
+  it('validates and forwards high-level workflow actions', async () => {
+    const mockServer = new MockMCPServer();
+    const mockWsServer = {
+      sendRequest: vi
+        .fn()
+        .mockResolvedValueOnce({ rootRemId: 'daily', items: [] })
+        .mockResolvedValueOnce({ tagRemId: 'todo-tag', todos: [] })
+        .mockResolvedValueOnce({ remId: 'todo-1', changed: true }),
+    };
+    registerAllTools(mockServer as never, mockWsServer as never, createMockLogger() as never);
+
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_set_outline_collapsed',
+        arguments: { today: true, collapsed: true, dryRun: false },
+      },
+    });
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: { name: 'remnote_list_todos', arguments: { tagRemId: 'todo-tag' } },
+    });
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_update_todo',
+        arguments: {
+          remId: 'todo-1',
+          finished: true,
+          todoTagRemId: 'todo-tag',
+          doneTagRemId: 'done-tag',
+          dryRun: false,
+        },
+      },
+    });
+
+    expect(mockWsServer.sendRequest).toHaveBeenNthCalledWith(1, 'set_outline_collapsed', {
+      today: true,
+      collapsed: true,
+      dryRun: false,
+    });
+    expect(mockWsServer.sendRequest).toHaveBeenNthCalledWith(2, 'list_todos', {
+      tagRemId: 'todo-tag',
+    });
+    expect(mockWsServer.sendRequest).toHaveBeenNthCalledWith(3, 'update_todo', {
+      remId: 'todo-1',
+      finished: true,
+      todoTagRemId: 'todo-tag',
+      doneTagRemId: 'done-tag',
+      dryRun: false,
+    });
   });
 });
 
@@ -835,6 +916,28 @@ describe('Tool Handlers - search', () => {
       limit: 50,
       contentMode: 'structured',
       depth: 2,
+      childLimit: 20,
+      maxContentLength: 3000,
+      ancestorDepth: 0,
+      view: 'standard',
+    });
+  });
+
+  it('should pass through card-only review search options', async () => {
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_search',
+        arguments: { query: 'TQQQ', cardsOnly: true, includeReviewStats: true },
+      },
+    });
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('search', {
+      query: 'TQQQ',
+      cardsOnly: true,
+      includeReviewStats: true,
+      limit: 50,
+      contentMode: 'none',
+      depth: 1,
       childLimit: 20,
       maxContentLength: 3000,
       ancestorDepth: 0,
@@ -1586,7 +1689,7 @@ describe('Tool Handlers - get_playbook', () => {
       params: { name: 'remnote_get_playbook', arguments: {} },
     })) as ToolSuccessResult;
 
-    expect(result.structuredContent?.playbookVersion).toBe('1.11.0');
+    expect(result.structuredContent?.playbookVersion).toBe('1.12.0');
     expect(Array.isArray(result.structuredContent?.decisionTree)).toBe(true);
     expect((result.structuredContent?.decisionTree as unknown[])?.length).toBeGreaterThan(0);
     expect(result.structuredContent?.decisionTree).toContain(
@@ -1614,7 +1717,7 @@ describe('Tool Handlers - get_playbook', () => {
       'Need an embedded RemNote-managed image? Call remnote_read_note with includeMediaMetadata=true, then call remnote_get_media with the returned remId, field, and mediaId.'
     );
     expect(result.structuredContent?.decisionTree).toContain(
-      'Need evidence about whether existing flashcards have been reviewed? Use remnote_get_review_stats with their exact Rem IDs and interpret the returned native repetition history and scheduling fields; do not infer mastery from search hits or note age.'
+      'Need evidence about whether existing flashcards have been reviewed? Use remnote_get_review_stats with exactly one scope: remIds, rootRemId, tagRemId, or today=true. Interpret native repetition history and scheduling fields; do not infer mastery from search hits or note age.'
     );
     expect(result.structuredContent?.decisionTree).toContain(
       'Need hierarchy placement context? Add ancestorDepth, typically 5, to search/read/search_by_tag/list_children; ancestors are direct-parent first.'

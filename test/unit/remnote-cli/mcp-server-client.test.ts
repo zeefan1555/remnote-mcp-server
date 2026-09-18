@@ -75,6 +75,13 @@ describe('McpServerClient', () => {
     ['move_note', 'remnote_move_note', { remId: 'rem123', newParentRemId: 'parent123' }],
     ['get_sdk_capabilities', 'remnote_get_sdk_capabilities', {}],
     ['sdk_call', 'remnote_sdk_call', { capability: 'rem.get-text', targetId: 'rem123' }],
+    ['set_outline_collapsed', 'remnote_set_outline_collapsed', { today: true, collapsed: true }],
+    ['list_todos', 'remnote_list_todos', { tagRemId: 'todo-tag' }],
+    [
+      'update_todo',
+      'remnote_update_todo',
+      { remId: 'todo-1', finished: true, todoTagRemId: 'todo-tag', doneTagRemId: 'done-tag' },
+    ],
     [
       'set_document_status',
       'remnote_set_document_status',

@@ -63,11 +63,12 @@ If any precondition is missing, stop and fix setup first.
 
 ## Read-First Safety Policy
 
-- Default to read-only flows: `status`, `search`, `search-by-tag`, `read`, `review-stats`, `read-table`, and
-  `sdk capabilities`.
+- Default to read-only flows: `status`, `search`, `search-by-tag`, `read`, `review-stats`, `outline` preview,
+  `todo list`, `read-table`, and `sdk capabilities`.
 - Do not run mutating commands by default.
 - For writes (`create`, `update`, `set-document-status`, `insert-children`, `replace-children`, `update-tags`,
-  `set-property`, `journal`), require the exact phrase `confirm write` from the user in the same turn.
+  `set-property`, `journal`, `outline --apply`, `todo complete --apply`, `todo reopen --apply`), require the exact
+  phrase `confirm write` from the user in the same turn.
 - If `confirm write` is not present, ask for confirmation and do not execute writes.
 
 ## Command Invocation Rule (critical)
@@ -122,9 +123,15 @@ If any precondition is missing, stop and fix setup first.
 ### Read-Only Operations (default)
 
 - Search notes: `remnote-cli search "query"` (use `--parent-id <parent-rem-id>` to scope search within a Rem's subtree)
+- Find existing card candidates with native review facts:
+  `remnote-cli search "query" --cards-only --include-review-stats --view full`
 - Search by exact tag Rem ID: `remnote-cli search-by-tag --tag-id <tag-rem-id>`
 - Read note by Rem ID: `remnote-cli read <rem-id>`
 - Read native card review facts: `remnote-cli review-stats <rem-id> [more-rem-ids...]`
+- Read review facts for a whole scope: `remnote-cli review-stats --today`, `--root-id <rem-id>`, or
+  `--tag-id <tag-rem-id>`
+- Preview outline folding: `remnote-cli outline collapse --today`; add `--apply` only after write confirmation
+- List tagged todos: `remnote-cli todo list --tag-id <todo-tag-rem-id>`
 - Discover Plugin SDK capabilities: `remnote-cli sdk capabilities --status supported --text`
 - List one SDK group and its generated method names: `remnote-cli sdk rem`
 - Inspect one command before calling it: `remnote-cli sdk rem object-get-children-rem --help`
@@ -185,6 +192,12 @@ If any precondition is missing, stop and fix setup first.
   - `remnote-cli insert-children <parent-rem-id> --content-file /tmp/children.md --position before --sibling-rem-id <rem-id> --text`
 - Update tags by exact tag Rem ID:
   - `remnote-cli update-tags <rem-id> --add-tag-ids <tag-rem-id> --remove-tag-ids <tag-rem-id> --text`
+- Collapse or expand a document outline after preview:
+  - `remnote-cli outline collapse --today --apply --text`
+  - `remnote-cli outline expand --root-id <root-rem-id> --apply --text`
+- Complete or reopen a tagged todo after preview:
+  - `remnote-cli todo complete <rem-id> --todo-tag-id <todo-tag-rem-id> --done-tag-id <done-tag-rem-id> --apply --text`
+  - `remnote-cli todo reopen <rem-id> --todo-tag-id <todo-tag-rem-id> --done-tag-id <done-tag-rem-id> --apply --text`
 - Set or clear a tag/table property value by exact IDs:
   - `remnote-cli set-property <rem-id> --tag-id <tag-rem-id> --property-id <property-rem-id> --value "People" --text`
   - `remnote-cli set-property <rem-id> --tag-id <tag-rem-id> --property-id <property-rem-id> --rem-reference-id <option-rem-id> --text`
@@ -212,8 +225,9 @@ If any precondition is missing, stop and fix setup first.
 
 ## Failure Handling
 
-When a bridge-backed operation fails (`search`, `search-by-tag`, `read`, `review-stats`, `sdk`, `read-table`, `create`, `update`,
-`set-document-status`, `insert-children`, `replace-children`, `update-tags`, `set-property`, `journal`, `status`), run
+When a bridge-backed operation fails (`search`, `search-by-tag`, `read`, `review-stats`, `outline`, `todo`, `sdk`,
+`read-table`, `create`, `update`, `set-document-status`, `insert-children`, `replace-children`, `update-tags`,
+`set-property`, `journal`, `status`), run
 this sequence in order:
 
 1. Check bridge status first:

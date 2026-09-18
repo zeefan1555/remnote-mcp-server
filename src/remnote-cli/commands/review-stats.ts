@@ -45,15 +45,23 @@ function formatReviewStatsText(data: unknown): string {
 export function registerReviewStatsCommand(program: Command): void {
   program
     .command('review-stats')
-    .description('Read native review facts for cards generated from one or more Rem IDs')
-    .argument('<rem-ids...>', 'One or more exact Rem IDs')
-    .action(async (remIds: string[]) => {
+    .description('Read native review facts for cards in an exact Rem scope')
+    .argument('[rem-ids...]', 'One or more exact Rem IDs')
+    .option('--today', "Inspect today's daily document and descendants")
+    .option('--root-id <remId>', 'Inspect this Rem and all descendants')
+    .option('--tag-id <tagRemId>', 'Inspect directly tagged Rems and all descendants')
+    .action(async (remIds: string[] | undefined, opts) => {
       const globalOpts = program.opts();
       const format: OutputFormat = globalOpts.text ? 'text' : 'json';
       const client = createCommandClient(program);
 
       try {
-        const result = await client.execute('get_review_stats', { remIds });
+        const payload: Record<string, unknown> = {};
+        if (remIds?.length) payload.remIds = remIds;
+        if (opts.today) payload.today = true;
+        if (opts.rootId) payload.rootRemId = opts.rootId;
+        if (opts.tagId) payload.tagRemId = opts.tagId;
+        const result = await client.execute('get_review_stats', payload);
         console.log(formatResult(result, format, formatReviewStatsText));
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);

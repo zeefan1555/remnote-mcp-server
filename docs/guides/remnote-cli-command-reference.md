@@ -15,8 +15,9 @@ remnote-mcp-server
 ```
 
 Bridge actions (`create`, `search`, `search-by-tag`, `read`, `get-media`, `list-children`, `move-note`, `update`,
-`review-stats`, `sdk`, `set-document-status`, `insert-children`, `replace-children`, `update-tags`, `set-property`, `journal`,
-`read-table`, `status`) also require RemNote with the RemNote Automation Bridge plugin connected to that MCP server.
+`review-stats`, `outline`, `todo`, `sdk`, `set-document-status`, `insert-children`, `replace-children`, `update-tags`,
+`set-property`, `journal`, `read-table`, `status`) also require RemNote with the RemNote Automation Bridge plugin
+connected to that MCP server.
 
 ## Global Options
 
@@ -146,6 +147,8 @@ Shared options for `search` and `search-by-tag`:
 | ------------------- | ------- | ------------------------------------------------ |
 | `--parent-id <id>`  | none    | Non-empty parent Rem ID to scope search within its subtree |
 | `--cursor <cursor>` | n/a     | Opaque cursor from a previous `search` response  |
+| `--cards-only` | off | Return only Rems that generate cards |
+| `--include-review-stats` | off | Include native card review facts on each result |
 
 Behavior rules:
 
@@ -158,7 +161,8 @@ Behavior rules:
 - `--depth`, `--child-limit`, and `--max-content-length` are most relevant when content rendering is enabled.
 - `tags` is optional and present when the matched Rem has readable tag identity metadata. JSON output preserves
   `{ tagRemId, name }` objects.
-- `--cursor` is bound to the specific search `query` and `--parent-id`. A cursor must be reused with the exact same query and parameters, and cannot be reused across different queries or scopes.
+- `--cursor` is bound to the specific search `query`, `--parent-id`, and `--cards-only` value. A cursor must be reused
+  with the exact same query and scope.
 
 Examples:
 
@@ -168,6 +172,7 @@ remnote-cli search "weekly" --limit 10 --content-mode structured --depth 2 --chi
 remnote-cli search "weekly" --limit 10 --cursor "search:v1:..."
 remnote-cli search "meeting" --limit 10 --parent-id <parent-rem-id>
 remnote-cli search "meeting" --limit 10 --parent-id <parent-rem-id> --cursor "search:v1:..."
+remnote-cli search "TQQQ" --cards-only --include-review-stats --view full
 ```
 
 ## search-by-tag
@@ -235,15 +240,45 @@ remnote-cli read abc123def --content-mode structured --depth 2 --child-limit 30
 
 ## review-stats
 
-Read the native RemNote review facts for cards generated from one or more exact Rem IDs.
+Read native RemNote review facts from exactly one scope:
 
 ```bash
 remnote-cli review-stats <rem-id> [more-rem-ids...]
+remnote-cli review-stats --today
+remnote-cli review-stats --root-id <root-rem-id>
+remnote-cli review-stats --tag-id <tag-rem-id>
 ```
 
 JSON output preserves the raw card type, creation timestamp, repetition history, last and next repetition timestamps,
 and consecutive wrong count. Text output provides a compact summary. The command does not calculate mastery or change
 the review schedule.
+
+## outline
+
+Preview or update folding for every non-leaf Rem in one document or portal context:
+
+```bash
+remnote-cli outline collapse --today
+remnote-cli outline collapse --today --apply
+remnote-cli outline expand --root-id <root-rem-id> --apply
+```
+
+The command defaults to preview mode. `--apply` requires Bridge writes to be enabled and verifies each changed Rem in
+the selected portal context.
+
+## todo
+
+List exact-tag todos and synchronize native checkbox state with TODO/DONE tags:
+
+```bash
+remnote-cli todo list --tag-id <todo-tag-rem-id>
+remnote-cli todo complete <rem-id> --todo-tag-id <todo-tag-rem-id> --done-tag-id <done-tag-rem-id>
+remnote-cli todo complete <rem-id> --todo-tag-id <todo-tag-rem-id> --done-tag-id <done-tag-rem-id> --apply
+remnote-cli todo reopen <rem-id> --todo-tag-id <todo-tag-rem-id> --done-tag-id <done-tag-rem-id> --apply
+```
+
+`complete` and `reopen` default to preview. On apply, native todo state is changed only when the Rem already uses a
+native checkbox; exact status tags are always synchronized in one Bridge transaction.
 
 ## SDK commands
 

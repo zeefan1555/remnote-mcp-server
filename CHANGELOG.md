@@ -7,6 +7,17 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-09-18
+
+### Added
+
+- Add `outline collapse|expand` with `--today` or `--root-id`, preview-by-default behavior, transactional updates, and
+  per-Rem verification.
+- Add `todo list|complete|reopen` for exact-tag discovery and atomic synchronization of native todo state with
+  TODO/DONE tags.
+- Add `review-stats --today|--root-id|--tag-id` and `search --cards-only --include-review-stats` for incremental
+  learning workflows.
+
 ### Changed
 
 - Nest Plugin SDK discovery and all 19 namespaces under the single `remnote-cli sdk` command, replacing the former

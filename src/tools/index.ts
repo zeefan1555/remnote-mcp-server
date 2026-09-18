@@ -6,6 +6,11 @@ import { SearchSchema } from '../schemas/remnote-schemas.js';
 import { SearchByTagSchema } from '../schemas/remnote-schemas.js';
 import { ReadNoteSchema } from '../schemas/remnote-schemas.js';
 import { ReviewStatsSchema } from '../schemas/remnote-schemas.js';
+import {
+  ListTodosSchema,
+  SetOutlineCollapsedSchema,
+  UpdateTodoSchema,
+} from '../schemas/remnote-schemas.js';
 import { GetSdkCapabilitiesSchema, SdkCallSchema } from '../schemas/remnote-schemas.js';
 import { GetMediaSchema } from '../schemas/remnote-schemas.js';
 import { UpdateNoteSchema } from '../schemas/remnote-schemas.js';
@@ -107,6 +112,48 @@ const MATCHED_REM_SCHEMA = {
   additionalProperties: false,
 };
 
+const CARD_REVIEW_STATS_SCHEMA = {
+  type: 'object' as const,
+  properties: {
+    cardId: { type: 'string', description: 'Generated card ID' },
+    remId: { type: 'string', description: 'Source Rem ID reported by RemNote' },
+    type: {
+      anyOf: [
+        { type: 'string', enum: ['forward', 'backward'] },
+        {
+          type: 'object',
+          properties: { clozeId: { type: 'string' } },
+          required: ['clozeId'],
+          additionalProperties: false,
+        },
+      ],
+      description: 'Native card type: forward, backward, or a cloze descriptor',
+    },
+    createdAt: { type: 'number', description: 'Native card creation timestamp' },
+    repetitionHistory: {
+      type: 'array',
+      description: 'Native RemNote repetition history, oldest to newest',
+      items: {
+        type: 'object',
+        properties: {
+          date: { type: 'number' },
+          score: { type: 'number' },
+          responseTime: { type: 'number' },
+          isCram: { type: 'boolean' },
+          pluginData: { type: 'object' },
+          scheduled: { type: 'number' },
+        },
+        required: ['date', 'score'],
+      },
+    },
+    lastRepetitionTime: { type: 'number' },
+    nextRepetitionTime: { type: 'number' },
+    timesWrongInRow: { type: 'number' },
+  },
+  required: ['cardId', 'remId', 'type', 'createdAt', 'repetitionHistory'],
+  additionalProperties: false,
+};
+
 export const CREATE_NOTE_TOOL = {
   name: 'remnote_create_note',
   description:
@@ -176,6 +223,14 @@ export const SEARCH_TOOL = {
         minLength: 1,
         description:
           "Optional non-empty Rem ID. Scope the search to within this Rem's subtree. The Rem itself is excluded from results.",
+      },
+      cardsOnly: {
+        type: 'boolean',
+        description: 'Return only Rems that generate one or more cards',
+      },
+      includeReviewStats: {
+        type: 'boolean',
+        description: 'Include native review facts for every card generated from each result',
       },
       limit: { type: 'number', description: 'Maximum results (1-150, default: 50)' },
       cursor: {
@@ -295,6 +350,11 @@ export const SEARCH_TOOL = {
               type: 'string',
               description:
                 'Flashcard direction: forward, reverse, or bidirectional (omitted if not a flashcard)',
+            },
+            cards: {
+              type: 'array',
+              items: CARD_REVIEW_STATS_SCHEMA,
+              description: 'Native card review facts when includeReviewStats=true',
             },
             content: {
               type: 'string',
@@ -1268,7 +1328,7 @@ export const READ_TABLE_TOOL = {
 export const REVIEW_STATS_TOOL = {
   name: 'remnote_get_review_stats',
   description:
-    'Read native RemNote review facts for every card generated from one or more exact Rem IDs. Returns raw scheduling and repetition history only; it does not calculate a custom mastery score.',
+    "Read native RemNote review facts for cards selected by exact Rem IDs, a root subtree, a tag subtree, or today's daily document. Returns raw scheduling and repetition history only; it does not calculate a custom mastery score.",
   inputSchema: {
     type: 'object' as const,
     properties: {
@@ -1279,8 +1339,22 @@ export const REVIEW_STATS_TOOL = {
         items: { type: 'string', minLength: 1 },
         description: 'Exact Rem IDs whose generated cards should be inspected',
       },
+      rootRemId: {
+        type: 'string',
+        minLength: 1,
+        description: 'Inspect this Rem and all of its descendants',
+      },
+      tagRemId: {
+        type: 'string',
+        minLength: 1,
+        description: 'Inspect directly tagged Rems and all of their descendants',
+      },
+      today: {
+        type: 'boolean',
+        const: true,
+        description: "Inspect today's daily document and all descendants",
+      },
     },
-    required: ['remIds'],
     additionalProperties: false,
   },
   outputSchema: {
@@ -1294,46 +1368,7 @@ export const REVIEW_STATS_TOOL = {
             remId: { type: 'string', description: 'Requested source Rem ID' },
             cards: {
               type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  cardId: { type: 'string', description: 'Generated card ID' },
-                  remId: { type: 'string', description: 'Source Rem ID reported by RemNote' },
-                  type: {
-                    anyOf: [
-                      { type: 'string', enum: ['forward', 'backward'] },
-                      {
-                        type: 'object',
-                        properties: { clozeId: { type: 'string' } },
-                        required: ['clozeId'],
-                        additionalProperties: false,
-                      },
-                    ],
-                    description: 'Native card type: forward, backward, or a cloze descriptor',
-                  },
-                  createdAt: { type: 'number', description: 'Native card creation timestamp' },
-                  repetitionHistory: {
-                    type: 'array',
-                    description: 'Native RemNote repetition history, oldest to newest',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        date: { type: 'number' },
-                        score: { type: 'number' },
-                        responseTime: { type: 'number' },
-                        isCram: { type: 'boolean' },
-                        pluginData: { type: 'object' },
-                        scheduled: { type: 'number' },
-                      },
-                      required: ['date', 'score'],
-                    },
-                  },
-                  lastRepetitionTime: { type: 'number' },
-                  nextRepetitionTime: { type: 'number' },
-                  timesWrongInRow: { type: 'number' },
-                },
-                required: ['cardId', 'remId', 'type', 'createdAt', 'repetitionHistory'],
-              },
+              items: CARD_REVIEW_STATS_SCHEMA,
             },
           },
           required: ['remId', 'cards'],
@@ -1341,6 +1376,148 @@ export const REVIEW_STATS_TOOL = {
       },
     },
     required: ['results'],
+  },
+};
+
+export const SET_OUTLINE_COLLAPSED_TOOL = {
+  name: 'remnote_set_outline_collapsed',
+  description:
+    "Preview or update collapsed state for every non-leaf Rem in a document/portal subtree or today's daily document, then verify each changed Rem in the same portal context.",
+  inputSchema: {
+    type: 'object' as const,
+    properties: {
+      rootRemId: { type: 'string', minLength: 1, description: 'Document or portal root Rem ID' },
+      today: {
+        type: 'boolean',
+        const: true,
+        description: "Use today's daily document as the root",
+      },
+      collapsed: { type: 'boolean', description: 'True to collapse, false to expand' },
+      dryRun: {
+        type: 'boolean',
+        description: 'Preview without changing RemNote (default: true)',
+      },
+    },
+    required: ['collapsed'],
+    additionalProperties: false,
+  },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      rootRemId: { type: 'string' },
+      rootTitle: { type: 'string' },
+      collapsed: { type: 'boolean' },
+      dryRun: { type: 'boolean' },
+      scanned: { type: 'number' },
+      eligible: { type: 'number' },
+      changed: { type: 'number' },
+      items: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            remId: { type: 'string' },
+            title: { type: 'string' },
+            oldIsCollapsed: { type: 'boolean' },
+            newIsCollapsed: { type: 'boolean' },
+            changed: { type: 'boolean' },
+          },
+          required: ['remId', 'title', 'oldIsCollapsed', 'newIsCollapsed', 'changed'],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: [
+      'rootRemId',
+      'rootTitle',
+      'collapsed',
+      'dryRun',
+      'scanned',
+      'eligible',
+      'changed',
+      'items',
+    ],
+    additionalProperties: false,
+  },
+};
+
+const TODO_ITEM_SCHEMA = {
+  type: 'object' as const,
+  properties: {
+    remId: { type: 'string' },
+    title: { type: 'string' },
+    isTodo: { type: 'boolean' },
+    todoStatus: { type: 'string', enum: ['Finished', 'Unfinished'] },
+    parentRemId: { type: 'string' },
+    parentTitle: { type: 'string' },
+  },
+  required: ['remId', 'title', 'isTodo'],
+  additionalProperties: false,
+};
+
+export const LIST_TODOS_TOOL = {
+  name: 'remnote_list_todos',
+  description:
+    'List Rems carrying an exact TODO tag, including their native RemNote todo state when present.',
+  inputSchema: {
+    type: 'object' as const,
+    properties: {
+      tagRemId: { type: 'string', minLength: 1, description: 'Exact TODO tag Rem ID' },
+    },
+    required: ['tagRemId'],
+    additionalProperties: false,
+  },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      tagRemId: { type: 'string' },
+      todos: { type: 'array', items: TODO_ITEM_SCHEMA },
+    },
+    required: ['tagRemId', 'todos'],
+    additionalProperties: false,
+  },
+};
+
+export const UPDATE_TODO_TOOL = {
+  name: 'remnote_update_todo',
+  description:
+    'Preview or atomically complete/reopen one Rem by updating its native todo status when present and swapping exact TODO/DONE tags.',
+  inputSchema: {
+    type: 'object' as const,
+    properties: {
+      remId: { type: 'string', minLength: 1, description: 'Todo Rem ID' },
+      finished: { type: 'boolean', description: 'True to complete, false to reopen' },
+      todoTagRemId: { type: 'string', minLength: 1, description: 'Exact TODO tag Rem ID' },
+      doneTagRemId: { type: 'string', minLength: 1, description: 'Exact DONE tag Rem ID' },
+      dryRun: {
+        type: 'boolean',
+        description: 'Preview without changing RemNote (default: true)',
+      },
+    },
+    required: ['remId', 'finished', 'todoTagRemId', 'doneTagRemId'],
+    additionalProperties: false,
+  },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      ...TODO_ITEM_SCHEMA.properties,
+      dryRun: { type: 'boolean' },
+      changed: { type: 'boolean' },
+      oldTodoStatus: { type: 'string', enum: ['Finished', 'Unfinished'] },
+      newTodoStatus: { type: 'string', enum: ['Finished', 'Unfinished'] },
+      addedTagRemIds: { type: 'array', items: { type: 'string' } },
+      removedTagRemIds: { type: 'array', items: { type: 'string' } },
+    },
+    required: [
+      'remId',
+      'title',
+      'isTodo',
+      'dryRun',
+      'changed',
+      'addedTagRemIds',
+      'removedTagRemIds',
+    ],
+    additionalProperties: false,
   },
 };
 
@@ -1513,6 +1690,9 @@ export const ALL_TOOLS = [
   STATUS_TOOL,
   READ_TABLE_TOOL,
   REVIEW_STATS_TOOL,
+  SET_OUTLINE_COLLAPSED_TOOL,
+  LIST_TODOS_TOOL,
+  UPDATE_TODO_TOOL,
   GET_SDK_CAPABILITIES_TOOL,
   SDK_CALL_TOOL,
 ] as const;
@@ -1601,6 +1781,24 @@ export function registerAllTools(
         case 'remnote_get_review_stats': {
           const args = ReviewStatsSchema.parse(request.params.arguments);
           result = await wsServer.sendRequest('get_review_stats', args);
+          break;
+        }
+
+        case 'remnote_set_outline_collapsed': {
+          const args = SetOutlineCollapsedSchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('set_outline_collapsed', args);
+          break;
+        }
+
+        case 'remnote_list_todos': {
+          const args = ListTodosSchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('list_todos', args);
+          break;
+        }
+
+        case 'remnote_update_todo': {
+          const args = UpdateTodoSchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('update_todo', args);
           break;
         }
 
@@ -1718,9 +1916,9 @@ export function registerAllTools(
           }
 
           result = {
-            playbookVersion: '1.11.0',
+            playbookVersion: '1.12.0',
             summary:
-              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, inspect native card review facts, discover optional Plugin SDK capabilities, retrieve managed images, choose compact/full output views, and apply safe metadata writes including real aliases, exact inline [[id:<remId>]] references, tag property values, and dry-run-first document status changes.',
+              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, inspect native card review facts by ID or scope, manage outline folding and tagged todos, discover optional Plugin SDK capabilities, retrieve managed images, and apply safe metadata writes.',
             recommendedStatusCheck: {
               tool: 'remnote_status',
               cadence: 'recommended once per session and before risky writes',
@@ -1731,6 +1929,7 @@ export function registerAllTools(
               'Need connection and write-policy context? Call remnote_status first.',
               'Need an embedded RemNote-managed image? Call remnote_read_note with includeMediaMetadata=true, then call remnote_get_media with the returned remId, field, and mediaId.',
               'Need to orient across the KB? Use remnote_search with contentMode="structured", view="compact", depth=1, childLimit=500.',
+              'Need candidate flashcards for incremental learning? Use remnote_search with cardsOnly=true and includeReviewStats=true; compare content and native review facts without inventing a mastery score.',
               'Need broad search enumeration? Continue remnote_search or remnote_search_by_tag with nextCursor while hasMore is true.',
               'Need to search within a specific branch? Use remnote_search with parentRemId; keep the same parentRemId when continuing with nextCursor.',
               'Need tagged-note context/navigation? Use remnote_search_by_tag with tagRemId and default resultMode="context"; inspect matchedRems to see the direct tagged Rems behind each context result.',
@@ -1739,7 +1938,9 @@ export function registerAllTools(
               'Need a large tag search to finish? Prefer cursor paging first; use remnote_search_by_tag.timeoutMs only as a bounded wait-time escape hatch.',
               'Need to traverse a specific branch cheaply? Use remnote_list_children on the parentRemId and page through direct children.',
               'Need to read a selected subtree? Use remnote_read_note on a chosen remId with contentMode="structured", depth=1, childLimit=500, then deepen selected branches.',
-              'Need evidence about whether existing flashcards have been reviewed? Use remnote_get_review_stats with their exact Rem IDs and interpret the returned native repetition history and scheduling fields; do not infer mastery from search hits or note age.',
+              'Need evidence about whether existing flashcards have been reviewed? Use remnote_get_review_stats with exactly one scope: remIds, rootRemId, tagRemId, or today=true. Interpret native repetition history and scheduling fields; do not infer mastery from search hits or note age.',
+              "Need to fold a document or today's note? Preview with remnote_set_outline_collapsed dryRun=true, then apply with dryRun=false after approval.",
+              'Need tagged todos and native checkbox state? Use remnote_list_todos with the exact TODO tag ID. Use remnote_update_todo dryRun first, then apply to synchronize native status and exact TODO/DONE tags.',
               'Need a Plugin SDK operation without a friendly tool? Call remnote_get_sdk_capabilities, select an available capability ID, then call remnote_sdk_call with positional JSON args and targetId when required. Prefer friendly tools when they exist, and never enable allowDestructive without explicit user intent.',
               'Need to follow inline graph references? Inspect inlineRefs on search/read results and structured child nodes for exact target Rem IDs.',
               'Need tabular/structured data from an Advanced Table? Use remnote_read_table with either tableTitle or tableRemId. Use propertyFilter to limit columns for large tables.',
@@ -1781,6 +1982,7 @@ export function registerAllTools(
                 'remnote_replace_children requires acceptReplaceOperation=true and preserves parent identity, title, aliases, document status, tags, and properties.',
                 'remnote_insert_children preserves existing child Rem IDs; remnote_replace_children removes existing direct content-child Rem IDs.',
                 'remnote_move_note preserves the moved Rem ID and subtree; dryRun defaults to true.',
+                'remnote_set_outline_collapsed and remnote_update_todo default to dryRun=true and require acceptWriteOperations=true when applied.',
                 'All production tag writes use exact tag Rem IDs: create_note.tagRemIds, append_journal.tagRemIds, and update_tags add/remove arrays.',
                 'Markdown-capable write fields support [[id:<remId>]] to create real inline references to existing Rems without name lookup.',
                 'remnote_set_property writes exact-ID tag/table property values and requires acceptWriteOperations=true.',

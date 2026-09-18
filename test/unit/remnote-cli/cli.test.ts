@@ -22,6 +22,8 @@ describe('createProgram', () => {
     expect(commandNames).not.toContain('search-tag');
     expect(commandNames).toContain('read');
     expect(commandNames).toContain('get-media');
+    expect(commandNames).toContain('outline');
+    expect(commandNames).toContain('todo');
     expect(commandNames).toContain('sdk');
     expect(commandNames).not.toContain('sdk-capabilities');
     expect(commandNames).not.toContain('sdk-app');

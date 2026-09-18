@@ -10,6 +10,9 @@ import {
   SearchByTagSchema,
   ReadNoteSchema,
   ReviewStatsSchema,
+  SetOutlineCollapsedSchema,
+  ListTodosSchema,
+  UpdateTodoSchema,
   GetSdkCapabilitiesSchema,
   SdkCallSchema,
   UpdateNoteSchema,
@@ -54,18 +57,56 @@ describe('SDK schemas', () => {
 });
 
 describe('ReviewStatsSchema', () => {
-  it('accepts one or more non-empty Rem IDs', () => {
+  it('accepts one exact review scope', () => {
     expect(ReviewStatsSchema.parse({ remIds: ['rem-1', 'rem-2'] })).toEqual({
       remIds: ['rem-1', 'rem-2'],
     });
+    expect(ReviewStatsSchema.parse({ rootRemId: 'root-1' })).toEqual({ rootRemId: 'root-1' });
+    expect(ReviewStatsSchema.parse({ tagRemId: 'tag-1' })).toEqual({ tagRemId: 'tag-1' });
+    expect(ReviewStatsSchema.parse({ today: true })).toEqual({ today: true });
   });
 
-  it('rejects missing, empty, or oversized Rem ID lists', () => {
+  it('rejects missing, conflicting, empty, or oversized selectors', () => {
     expect(() => ReviewStatsSchema.parse({})).toThrow();
+    expect(() => ReviewStatsSchema.parse({ remIds: ['rem-1'], today: true })).toThrow();
     expect(() => ReviewStatsSchema.parse({ remIds: [] })).toThrow();
     expect(() => ReviewStatsSchema.parse({ remIds: [''] })).toThrow();
     expect(() =>
       ReviewStatsSchema.parse({ remIds: Array.from({ length: 101 }, (_, i) => `r${i}`) })
+    ).toThrow();
+  });
+});
+
+describe('Outline and todo schemas', () => {
+  it('requires one outline root selector', () => {
+    expect(SetOutlineCollapsedSchema.parse({ today: true, collapsed: true })).toMatchObject({
+      today: true,
+      collapsed: true,
+      dryRun: true,
+    });
+    expect(() => SetOutlineCollapsedSchema.parse({ collapsed: true })).toThrow();
+    expect(() =>
+      SetOutlineCollapsedSchema.parse({ rootRemId: 'root-1', today: true, collapsed: true })
+    ).toThrow();
+  });
+
+  it('validates todo list and update inputs', () => {
+    expect(ListTodosSchema.parse({ tagRemId: 'todo-tag' })).toEqual({ tagRemId: 'todo-tag' });
+    expect(
+      UpdateTodoSchema.parse({
+        remId: 'todo-1',
+        finished: true,
+        todoTagRemId: 'todo-tag',
+        doneTagRemId: 'done-tag',
+      })
+    ).toMatchObject({ finished: true, dryRun: true });
+    expect(() =>
+      UpdateTodoSchema.parse({
+        remId: 'todo-1',
+        finished: true,
+        todoTagRemId: 'same',
+        doneTagRemId: 'same',
+      })
     ).toThrow();
   });
 });
@@ -152,6 +193,18 @@ describe('SearchSchema', () => {
   it('should apply default limit of 50', () => {
     const result = SearchSchema.parse({ query: 'test' });
     expect(result.limit).toBe(50);
+    expect(result.cardsOnly).toBeUndefined();
+    expect(result.includeReviewStats).toBeUndefined();
+  });
+
+  it('should accept card-only search with native review facts', () => {
+    const result = SearchSchema.parse({
+      query: 'TQQQ',
+      cardsOnly: true,
+      includeReviewStats: true,
+    });
+    expect(result.cardsOnly).toBe(true);
+    expect(result.includeReviewStats).toBe(true);
   });
 
   it('should apply default contentMode of "none"', () => {

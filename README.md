@@ -195,10 +195,13 @@ After installing the LaunchAgent, `remnote-mcp-server daemon status|start|stop|r
 | Tool                      | Description                                                                 |
 |---------------------------|-----------------------------------------------------------------------------|
 | `remnote_create_note`     | Create notes, markdown trees, or flashcards with real aliases, optional exact tag Rem IDs, and root document status |
-| `remnote_search`          | Search knowledge base with full-text search, parent context, and optional tag IDs/names |
+| `remnote_search`          | Search knowledge base with optional card-only filtering and native review facts |
 | `remnote_search_by_tag`   | Search by exact tag Rem ID with ancestor-context resolution |
 | `remnote_read_note`       | Read note by ID with metadata, optional tag IDs/names, and markdown or structured content |
-| `remnote_get_review_stats` | Read native review history and scheduling facts for cards from exact Rem IDs |
+| `remnote_get_review_stats` | Read native review facts by exact IDs, root subtree, tag subtree, or today |
+| `remnote_set_outline_collapsed` | Preview or apply verified outline collapse/expand |
+| `remnote_list_todos`      | List exact-tag todos with native todo state |
+| `remnote_update_todo`     | Atomically synchronize native todo state and TODO/DONE tags |
 | `remnote_get_sdk_capabilities` | Discover bridge-advertised RemNote Plugin SDK capabilities |
 | `remnote_sdk_call`         | Invoke a discovered SDK capability with bounded JSON arguments |
 | `remnote_get_media`       | Retrieve one validated RemNote-managed image as MCP-native image content |

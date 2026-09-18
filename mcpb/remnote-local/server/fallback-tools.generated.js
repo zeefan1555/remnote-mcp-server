@@ -63,6 +63,14 @@ export const FALLBACK_TOOLS = [
           description:
             "Optional non-empty Rem ID. Scope the search to within this Rem's subtree. The Rem itself is excluded from results.",
         },
+        cardsOnly: {
+          type: 'boolean',
+          description: 'Return only Rems that generate one or more cards',
+        },
+        includeReviewStats: {
+          type: 'boolean',
+          description: 'Include native review facts for every card generated from each result',
+        },
         limit: {
           type: 'number',
           description: 'Maximum results (1-150, default: 50)',
@@ -616,7 +624,7 @@ export const FALLBACK_TOOLS = [
   {
     name: 'remnote_get_review_stats',
     description:
-      'Read native RemNote review facts for every card generated from one or more exact Rem IDs. Returns raw scheduling and repetition history only; it does not calculate a custom mastery score.',
+      "Read native RemNote review facts for cards selected by exact Rem IDs, a root subtree, a tag subtree, or today's daily document. Returns raw scheduling and repetition history only; it does not calculate a custom mastery score.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -630,8 +638,104 @@ export const FALLBACK_TOOLS = [
           },
           description: 'Exact Rem IDs whose generated cards should be inspected',
         },
+        rootRemId: {
+          type: 'string',
+          minLength: 1,
+          description: 'Inspect this Rem and all of its descendants',
+        },
+        tagRemId: {
+          type: 'string',
+          minLength: 1,
+          description: 'Inspect directly tagged Rems and all of their descendants',
+        },
+        today: {
+          type: 'boolean',
+          const: true,
+          description: "Inspect today's daily document and all descendants",
+        },
       },
-      required: ['remIds'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'remnote_set_outline_collapsed',
+    description:
+      "Preview or update collapsed state for every non-leaf Rem in a document/portal subtree or today's daily document, then verify each changed Rem in the same portal context.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        rootRemId: {
+          type: 'string',
+          minLength: 1,
+          description: 'Document or portal root Rem ID',
+        },
+        today: {
+          type: 'boolean',
+          const: true,
+          description: "Use today's daily document as the root",
+        },
+        collapsed: {
+          type: 'boolean',
+          description: 'True to collapse, false to expand',
+        },
+        dryRun: {
+          type: 'boolean',
+          description: 'Preview without changing RemNote (default: true)',
+        },
+      },
+      required: ['collapsed'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'remnote_list_todos',
+    description:
+      'List Rems carrying an exact TODO tag, including their native RemNote todo state when present.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tagRemId: {
+          type: 'string',
+          minLength: 1,
+          description: 'Exact TODO tag Rem ID',
+        },
+      },
+      required: ['tagRemId'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'remnote_update_todo',
+    description:
+      'Preview or atomically complete/reopen one Rem by updating its native todo status when present and swapping exact TODO/DONE tags.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        remId: {
+          type: 'string',
+          minLength: 1,
+          description: 'Todo Rem ID',
+        },
+        finished: {
+          type: 'boolean',
+          description: 'True to complete, false to reopen',
+        },
+        todoTagRemId: {
+          type: 'string',
+          minLength: 1,
+          description: 'Exact TODO tag Rem ID',
+        },
+        doneTagRemId: {
+          type: 'string',
+          minLength: 1,
+          description: 'Exact DONE tag Rem ID',
+        },
+        dryRun: {
+          type: 'boolean',
+          description: 'Preview without changing RemNote (default: true)',
+        },
+      },
+      required: ['remId', 'finished', 'todoTagRemId', 'doneTagRemId'],
       additionalProperties: false,
     },
   },

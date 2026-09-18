@@ -17,6 +17,9 @@ This smoke test requires:
 - `remnote_create_note`
 - `remnote_read_note`
 - `remnote_get_review_stats`
+- `remnote_set_outline_collapsed`
+- `remnote_list_todos`
+- `remnote_update_todo`
 - `remnote_get_sdk_capabilities`
 - `remnote_sdk_call`
 - `remnote_get_media`
@@ -67,6 +70,8 @@ Resolve all three by exact title and derive all Rem, property, field, and media 
    - Confirm the playbook mentions exact inline Rem references with `[[id:<remId>]]`.
    - Confirm the playbook describes managed-image retrieval and real alias writes.
    - Confirm the playbook recommends `remnote_get_review_stats` when review evidence is needed.
+   - Confirm the playbook covers card-only search with review facts, dry-run-first outline folding, and tagged todo
+     synchronization.
    - Confirm the playbook recommends SDK capability discovery before generic calls and explicit intent for destructive
      capabilities.
    - Call `remnote_get_sdk_capabilities`; confirm `sdkVersion` and `capabilities` are present and every capability has

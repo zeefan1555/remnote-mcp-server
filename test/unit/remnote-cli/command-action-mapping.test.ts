@@ -151,6 +151,53 @@ describe('command bridge action mapping', () => {
     executeSpy.mockRestore();
   });
 
+  it('maps review-stats scope selectors', async () => {
+    const todaySpy = await runCommand(['review-stats', '--today']);
+    expect(todaySpy).toHaveBeenCalledWith('get_review_stats', { today: true });
+    todaySpy.mockRestore();
+
+    const rootSpy = await runCommand(['review-stats', '--root-id', 'root-1']);
+    expect(rootSpy).toHaveBeenCalledWith('get_review_stats', { rootRemId: 'root-1' });
+    rootSpy.mockRestore();
+
+    const tagSpy = await runCommand(['review-stats', '--tag-id', 'tag-1']);
+    expect(tagSpy).toHaveBeenCalledWith('get_review_stats', { tagRemId: 'tag-1' });
+    tagSpy.mockRestore();
+  });
+
+  it('maps outline and todo workflow commands', async () => {
+    const outlineSpy = await runCommand(['outline', 'collapse', '--today', '--apply']);
+    expect(outlineSpy).toHaveBeenCalledWith('set_outline_collapsed', {
+      collapsed: true,
+      dryRun: false,
+      today: true,
+    });
+    outlineSpy.mockRestore();
+
+    const listSpy = await runCommand(['todo', 'list', '--tag-id', 'todo-tag']);
+    expect(listSpy).toHaveBeenCalledWith('list_todos', { tagRemId: 'todo-tag' });
+    listSpy.mockRestore();
+
+    const completeSpy = await runCommand([
+      'todo',
+      'complete',
+      'todo-1',
+      '--todo-tag-id',
+      'todo-tag',
+      '--done-tag-id',
+      'done-tag',
+      '--apply',
+    ]);
+    expect(completeSpy).toHaveBeenCalledWith('update_todo', {
+      remId: 'todo-1',
+      finished: true,
+      todoTagRemId: 'todo-tag',
+      doneTagRemId: 'done-tag',
+      dryRun: false,
+    });
+    completeSpy.mockRestore();
+  });
+
   it('maps sdk capabilities to get_sdk_capabilities', async () => {
     const result = {
       sdkVersion: '0.0.46',
@@ -387,6 +434,22 @@ describe('command bridge action mapping', () => {
       query: 'ml',
       limit: 50,
       parentRemId: 'parentRemId123',
+    });
+    executeSpy.mockRestore();
+  });
+
+  it('passes through card filtering and review facts options', async () => {
+    const executeSpy = await runCommand([
+      'search',
+      'TQQQ',
+      '--cards-only',
+      '--include-review-stats',
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('search', {
+      query: 'TQQQ',
+      limit: 50,
+      cardsOnly: true,
+      includeReviewStats: true,
     });
     executeSpy.mockRestore();
   });

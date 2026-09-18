@@ -115,6 +115,11 @@ export const SearchSchema = z
       .describe(
         "Optional non-empty Rem ID. Scope the search to within this Rem's subtree. The Rem itself is excluded from results."
       ),
+    cardsOnly: z.boolean().optional().describe('Return only Rems that generate cards'),
+    includeReviewStats: z
+      .boolean()
+      .optional()
+      .describe('Include native review facts for cards generated from each result'),
     limit: z.number().int().min(1).max(150).default(50).describe('Maximum results'),
     cursor: z
       .string()
@@ -193,9 +198,65 @@ export const ReviewStatsSchema = z
       .array(z.string().min(1))
       .min(1)
       .max(100)
-      .describe('Rem IDs whose generated cards should be inspected'),
+      .optional()
+      .describe('Exact Rem IDs whose generated cards should be inspected'),
+    rootRemId: z.string().min(1).optional().describe('Inspect this Rem and all of its descendants'),
+    tagRemId: z
+      .string()
+      .min(1)
+      .optional()
+      .describe('Inspect directly tagged Rems and all of their descendants'),
+    today: z.literal(true).optional().describe("Inspect today's daily document and descendants"),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    const selectors = [value.remIds, value.rootRemId, value.tagRemId, value.today].filter(
+      (entry) => entry !== undefined
+    );
+    if (selectors.length !== 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Provide exactly one of remIds, rootRemId, tagRemId, or today=true',
+      });
+    }
+  });
+
+export const SetOutlineCollapsedSchema = z
+  .object({
+    rootRemId: z.string().min(1).optional().describe('Document or portal root Rem ID'),
+    today: z.literal(true).optional().describe("Use today's daily document as the root"),
+    collapsed: z.boolean().describe('True to collapse, false to expand'),
+    dryRun: z.boolean().default(true).describe('Preview without changing RemNote'),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if ((value.rootRemId === undefined ? 0 : 1) + (value.today === true ? 1 : 0) !== 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Provide exactly one of rootRemId or today=true',
+      });
+    }
+  });
+
+export const ListTodosSchema = z
+  .object({
+    tagRemId: z.string().min(1).describe('Exact TODO tag Rem ID'),
   })
   .strict();
+
+export const UpdateTodoSchema = z
+  .object({
+    remId: z.string().min(1).describe('Todo Rem ID'),
+    finished: z.boolean().describe('True to complete, false to reopen'),
+    todoTagRemId: z.string().min(1).describe('Exact TODO tag Rem ID'),
+    doneTagRemId: z.string().min(1).describe('Exact DONE tag Rem ID'),
+    dryRun: z.boolean().default(true).describe('Preview without changing RemNote'),
+  })
+  .strict()
+  .refine((value) => value.todoTagRemId !== value.doneTagRemId, {
+    message: 'todoTagRemId and doneTagRemId must be different',
+    path: ['doneTagRemId'],
+  });
 
 export const GetSdkCapabilitiesSchema = z.object({}).strict().default({});
 
