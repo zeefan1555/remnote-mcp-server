@@ -195,4 +195,7 @@ wrapper.
 
 ## Git Policy
 
-Do not create commits unless explicitly requested. Use `.agents/dev-workflow.md` as canonical policy.
+This user-maintained fork follows a single-maintainer workflow. For requested changes, run proportional verification,
+commit directly on `main`, and push to `origin/main`. Do not open or update a pull request unless the user explicitly
+asks for one. Use `.agents/dev-workflow.md` for implementation and verification details that do not conflict with this
+direct-main policy.

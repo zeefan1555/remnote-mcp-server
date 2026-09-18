@@ -16,6 +16,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Use a single-maintainer direct-`main` workflow for requested changes in this fork; open pull requests only when the
+  user explicitly asks for one or when evaluating external contributions.
 - Allow explicitly authorized full-operation sessions to manage the confirmed project-owned daemon and localhost
   Bridge lifecycle while preserving fail-closed handling for unknown listeners.
 - Define synchronized minor releases as the compatibility boundary for new bridge/server protocol features while
