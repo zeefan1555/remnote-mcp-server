@@ -15,8 +15,8 @@ remnote-mcp-server
 ```
 
 Bridge actions (`create`, `search`, `search-by-tag`, `read`, `get-media`, `list-children`, `move-note`, `update`,
-`set-document-status`, `insert-children`, `replace-children`, `update-tags`, `set-property`, `journal`, `read-table`,
-`status`) also require RemNote with the RemNote Automation Bridge plugin connected to that MCP server.
+`review-stats`, `set-document-status`, `insert-children`, `replace-children`, `update-tags`, `set-property`, `journal`,
+`read-table`, `status`) also require RemNote with the RemNote Automation Bridge plugin connected to that MCP server.
 
 ## Global Options
 
@@ -232,6 +232,18 @@ remnote-cli read abc123def
 remnote-cli read abc123def --content-mode none --depth 2 --child-limit 30 --max-content-length 5000 --text
 remnote-cli read abc123def --content-mode structured --depth 2 --child-limit 30
 ```
+
+## review-stats
+
+Read the native RemNote review facts for cards generated from one or more exact Rem IDs.
+
+```bash
+remnote-cli review-stats <rem-id> [more-rem-ids...]
+```
+
+JSON output preserves the raw card type, creation timestamp, repetition history, last and next repetition timestamps,
+and consecutive wrong count. Text output provides a compact summary. The command does not calculate mastery or change
+the review schedule.
 
 ## get-media
 

@@ -31,6 +31,10 @@ export const validReadNoteInput = {
   depth: 5,
 };
 
+export const validReviewStatsInput = {
+  remIds: ['rem-id-123', 'rem-id-456'],
+};
+
 export const validUpdateNoteInput = {
   remId: 'rem-id-456',
   title: 'Updated Title',
@@ -103,6 +107,27 @@ export const sampleTableResult = {
   ],
   totalRows: 2,
   rowsReturned: 2,
+};
+
+export const sampleReviewStatsResult = {
+  results: [
+    {
+      remId: 'rem-id-123',
+      cards: [
+        {
+          cardId: 'card-id-123',
+          remId: 'rem-id-123',
+          type: 'forward',
+          createdAt: 1_700_000_000_000,
+          repetitionHistory: [{ date: 1_700_000_100_000, score: 1, responseTime: 1200 }],
+          lastRepetitionTime: 1_700_000_100_000,
+          nextRepetitionTime: 1_700_100_000_000,
+          timesWrongInRow: 0,
+        },
+      ],
+    },
+    { remId: 'rem-id-456', cards: [] },
+  ],
 };
 
 // Bridge message fixtures

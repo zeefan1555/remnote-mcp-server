@@ -143,6 +143,14 @@ describe('command bridge action mapping', () => {
     executeSpy.mockRestore();
   });
 
+  it('maps review-stats command to get_review_stats', async () => {
+    const executeSpy = await runCommand(['review-stats', 'rem-1', 'rem-2']);
+    expect(executeSpy).toHaveBeenCalledWith('get_review_stats', {
+      remIds: ['rem-1', 'rem-2'],
+    });
+    executeSpy.mockRestore();
+  });
+
   it('passes through structured read content mode', async () => {
     const executeSpy = await runCommand(['read', 'abc123', '--content-mode', 'structured']);
     expect(executeSpy).toHaveBeenCalledWith('read_note', {

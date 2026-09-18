@@ -198,6 +198,7 @@ After installing the LaunchAgent, `remnote-mcp-server daemon status|start|stop|r
 | `remnote_search`          | Search knowledge base with full-text search, parent context, and optional tag IDs/names |
 | `remnote_search_by_tag`   | Search by exact tag Rem ID with ancestor-context resolution |
 | `remnote_read_note`       | Read note by ID with metadata, optional tag IDs/names, and markdown or structured content |
+| `remnote_get_review_stats` | Read native review history and scheduling facts for cards from exact Rem IDs |
 | `remnote_get_media`       | Retrieve one validated RemNote-managed image as MCP-native image content |
 | `remnote_update_note`     | Update title and add/remove real aliases |
 | `remnote_set_document_status` | Preview or set document status while preserving concept/card status |

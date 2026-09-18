@@ -21,6 +21,7 @@ import { registerJournalCommand } from './commands/journal.js';
 import { registerStatusCommand } from './commands/status.js';
 import { registerReadTableCommand } from './commands/table.js';
 import { registerGetMediaCommand } from './commands/media.js';
+import { registerReviewStatsCommand } from './commands/review-stats.js';
 
 const require = createRequire(import.meta.url);
 const packageJson = require('../../package.json') as { version: string };
@@ -46,6 +47,7 @@ export function createProgram(version: string): Command {
   registerSearchByTagCommand(program);
   registerListChildrenCommand(program);
   registerReadCommand(program);
+  registerReviewStatsCommand(program);
   registerGetMediaCommand(program);
   registerUpdateCommand(program);
   registerInsertChildrenCommand(program);

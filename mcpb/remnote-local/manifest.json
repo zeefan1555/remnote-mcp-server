@@ -87,6 +87,10 @@
     {
       "name": "remnote_read_table",
       "description": "Read an Advanced Table from RemNote by exact title or Rem ID. Returns the table schema (columns with property types) and row data (cell values). Use this when you need structured tabular data. For simple tag-based queries without table structure, prefer remnote_search_by_tag."
+    },
+    {
+      "name": "remnote_get_review_stats",
+      "description": "Read native RemNote review facts for every card generated from one or more exact Rem IDs. Returns raw scheduling and repetition history only; it does not calculate a custom mastery score."
     }
   ],
   "tools_generated": true,

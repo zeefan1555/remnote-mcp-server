@@ -381,6 +381,16 @@ export async function createSearchWorkflow(
       assertIsArray(result.remIds, 'remIds should be an array');
       state.noteCId = (result.remIds as string[])[0];
 
+      const reviewStats = (await ctx.cli.runExpectSuccess([
+        'review-stats',
+        ...(result.remIds as string[]),
+      ])) as Record<string, unknown>;
+      assertIsArray(reviewStats.results, 'review stats results');
+      const cards = (reviewStats.results as Array<Record<string, unknown>>).flatMap((entry) =>
+        Array.isArray(entry.cards) ? entry.cards : []
+      );
+      assertTruthy(cards.length > 0, 'created flashcard should expose at least one native card');
+
       steps.push({
         label: 'Create flashcard with positional arguments checks',
         passed: true,

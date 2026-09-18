@@ -19,6 +19,7 @@ JSON in a top-level `content` text block for compatibility with older clients an
 | `remnote_search` | Search knowledge base | Finding existing notes, exploring topics |
 | `remnote_search_by_tag` | Search by exact tag Rem ID | Finding ancestor context for tagged notes |
 | `remnote_read_note` | Read note content | Retrieving details, reading hierarchies |
+| `remnote_get_review_stats` | Read native card review facts | Incremental learning and review-state inspection |
 | `remnote_get_media` | Retrieve managed image content | Fetching an embedded RemNote image by stable metadata ID |
 | `remnote_list_children` | List direct child Rems | Cheap branch traversal without subtree rendering |
 | `remnote_update_note` | Update note metadata | Renaming and additive/removal alias changes |
@@ -375,6 +376,24 @@ instead of markdown `content`. Leaf nodes omit `children` rather than returning 
 - Use `depth: 1-3` for common hierarchies
 - Use `depth: 4-10` for deep nested structures
 - Higher depth may be slower for large hierarchies
+
+## remnote_get_review_stats
+
+Read RemNote's native review facts for every card generated from one or more exact Rem IDs.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `remIds` | string[] | Yes | One to 100 exact source Rem IDs |
+
+The response keeps RemNote's raw card type, creation time, repetition history, last and next repetition times, and
+consecutive wrong count. A Rem with no generated cards returns an empty `cards` array. The tool does not infer a custom
+mastery score or modify the scheduler.
+
+```json
+{
+  "remIds": ["abc123", "def456"]
+}
+```
 
 ## remnote_get_media
 

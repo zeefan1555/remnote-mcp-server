@@ -5,6 +5,7 @@ import { CreateNoteSchema } from '../schemas/remnote-schemas.js';
 import { SearchSchema } from '../schemas/remnote-schemas.js';
 import { SearchByTagSchema } from '../schemas/remnote-schemas.js';
 import { ReadNoteSchema } from '../schemas/remnote-schemas.js';
+import { ReviewStatsSchema } from '../schemas/remnote-schemas.js';
 import { GetMediaSchema } from '../schemas/remnote-schemas.js';
 import { UpdateNoteSchema } from '../schemas/remnote-schemas.js';
 import { SetDocumentStatusSchema } from '../schemas/remnote-schemas.js';
@@ -1263,6 +1264,85 @@ export const READ_TABLE_TOOL = {
   },
 };
 
+export const REVIEW_STATS_TOOL = {
+  name: 'remnote_get_review_stats',
+  description:
+    'Read native RemNote review facts for every card generated from one or more exact Rem IDs. Returns raw scheduling and repetition history only; it does not calculate a custom mastery score.',
+  inputSchema: {
+    type: 'object' as const,
+    properties: {
+      remIds: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 100,
+        items: { type: 'string', minLength: 1 },
+        description: 'Exact Rem IDs whose generated cards should be inspected',
+      },
+    },
+    required: ['remIds'],
+    additionalProperties: false,
+  },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      results: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            remId: { type: 'string', description: 'Requested source Rem ID' },
+            cards: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  cardId: { type: 'string', description: 'Generated card ID' },
+                  remId: { type: 'string', description: 'Source Rem ID reported by RemNote' },
+                  type: {
+                    anyOf: [
+                      { type: 'string', enum: ['forward', 'backward'] },
+                      {
+                        type: 'object',
+                        properties: { clozeId: { type: 'string' } },
+                        required: ['clozeId'],
+                        additionalProperties: false,
+                      },
+                    ],
+                    description: 'Native card type: forward, backward, or a cloze descriptor',
+                  },
+                  createdAt: { type: 'number', description: 'Native card creation timestamp' },
+                  repetitionHistory: {
+                    type: 'array',
+                    description: 'Native RemNote repetition history, oldest to newest',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        date: { type: 'number' },
+                        score: { type: 'number' },
+                        responseTime: { type: 'number' },
+                        isCram: { type: 'boolean' },
+                        pluginData: { type: 'object' },
+                        scheduled: { type: 'number' },
+                      },
+                      required: ['date', 'score'],
+                    },
+                  },
+                  lastRepetitionTime: { type: 'number' },
+                  nextRepetitionTime: { type: 'number' },
+                  timesWrongInRow: { type: 'number' },
+                },
+                required: ['cardId', 'remId', 'type', 'createdAt', 'repetitionHistory'],
+              },
+            },
+          },
+          required: ['remId', 'cards'],
+        },
+      },
+    },
+    required: ['results'],
+  },
+};
+
 export const PLAYBOOK_TOOL = {
   name: 'remnote_get_playbook',
   description:
@@ -1345,6 +1425,7 @@ export const ALL_TOOLS = [
   PLAYBOOK_TOOL,
   STATUS_TOOL,
   READ_TABLE_TOOL,
+  REVIEW_STATS_TOOL,
 ] as const;
 
 export function registerAllTools(
@@ -1425,6 +1506,12 @@ export function registerAllTools(
         case 'remnote_read_note': {
           const args = ReadNoteSchema.parse(request.params.arguments);
           result = await wsServer.sendRequest('read_note', args);
+          break;
+        }
+
+        case 'remnote_get_review_stats': {
+          const args = ReviewStatsSchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('get_review_stats', args);
           break;
         }
 
@@ -1530,9 +1617,9 @@ export function registerAllTools(
           }
 
           result = {
-            playbookVersion: '1.9.0',
+            playbookVersion: '1.10.0',
             summary:
-              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, retrieve managed images, choose compact/full output views, and apply safe metadata writes including real aliases, exact inline [[id:<remId>]] references, tag property values, and dry-run-first document status changes.',
+              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, inspect native card review facts, retrieve managed images, choose compact/full output views, and apply safe metadata writes including real aliases, exact inline [[id:<remId>]] references, tag property values, and dry-run-first document status changes.',
             recommendedStatusCheck: {
               tool: 'remnote_status',
               cadence: 'recommended once per session and before risky writes',
@@ -1551,6 +1638,7 @@ export function registerAllTools(
               'Need a large tag search to finish? Prefer cursor paging first; use remnote_search_by_tag.timeoutMs only as a bounded wait-time escape hatch.',
               'Need to traverse a specific branch cheaply? Use remnote_list_children on the parentRemId and page through direct children.',
               'Need to read a selected subtree? Use remnote_read_note on a chosen remId with contentMode="structured", depth=1, childLimit=500, then deepen selected branches.',
+              'Need evidence about whether existing flashcards have been reviewed? Use remnote_get_review_stats with their exact Rem IDs and interpret the returned native repetition history and scheduling fields; do not infer mastery from search hits or note age.',
               'Need to follow inline graph references? Inspect inlineRefs on search/read results and structured child nodes for exact target Rem IDs.',
               'Need tabular/structured data from an Advanced Table? Use remnote_read_table with either tableTitle or tableRemId. Use propertyFilter to limit columns for large tables.',
               'Need a human-readable summary? Switch to contentMode="markdown" on search/read results.',

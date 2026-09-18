@@ -9,6 +9,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Add `remnote_get_review_stats` and `remnote-cli review-stats` for reading native card repetition history and
+  scheduling facts without inventing a separate mastery score.
 - Add real RemNote alias writes through `remnote_create_note`, `remnote_update_note`, `remnote-cli create`, and
   `remnote-cli update`, with normalization, idempotency, exact removal, Unicode preservation, and MCP/MCPB/CLI parity.
 

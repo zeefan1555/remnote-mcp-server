@@ -63,7 +63,7 @@ If any precondition is missing, stop and fix setup first.
 
 ## Read-First Safety Policy
 
-- Default to read-only flows: `status`, `search`, `search-by-tag`, `read`, `read-table`.
+- Default to read-only flows: `status`, `search`, `search-by-tag`, `read`, `review-stats`, `read-table`.
 - Do not run mutating commands by default.
 - For writes (`create`, `update`, `set-document-status`, `insert-children`, `replace-children`, `update-tags`,
   `set-property`, `journal`), require the exact phrase `confirm write` from the user in the same turn.
@@ -123,6 +123,7 @@ If any precondition is missing, stop and fix setup first.
 - Search notes: `remnote-cli search "query"` (use `--parent-id <parent-rem-id>` to scope search within a Rem's subtree)
 - Search by exact tag Rem ID: `remnote-cli search-by-tag --tag-id <tag-rem-id>`
 - Read note by Rem ID: `remnote-cli read <rem-id>`
+- Read native card review facts: `remnote-cli review-stats <rem-id> [more-rem-ids...]`
 - Discover embedded image IDs: `remnote-cli read <rem-id> --include-media-metadata`
 - Save a managed image: `remnote-cli get-media <rem-id> --field <text|backText> --media-id <media-id> --output <path>`
 - Read Advanced Table by title or Rem ID:
@@ -203,7 +204,7 @@ If any precondition is missing, stop and fix setup first.
 
 ## Failure Handling
 
-When a bridge-backed operation fails (`search`, `search-by-tag`, `read`, `read-table`, `create`, `update`,
+When a bridge-backed operation fails (`search`, `search-by-tag`, `read`, `review-stats`, `read-table`, `create`, `update`,
 `set-document-status`, `insert-children`, `replace-children`, `update-tags`, `set-property`, `journal`, `status`), run
 this sequence in order:
 

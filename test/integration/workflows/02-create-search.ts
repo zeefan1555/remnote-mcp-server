@@ -389,6 +389,15 @@ export async function createSearchWorkflow(
       assertHasField(result, 'remIds', 'create flashcard note');
       assertIsArray(result.remIds, 'remIds should be an array');
       state.noteCId = result.remIds[0];
+
+      const reviewStats = (await ctx.client.callTool('remnote_get_review_stats', {
+        remIds: result.remIds,
+      })) as Record<string, unknown>;
+      assertIsArray(reviewStats.results, 'review stats results');
+      const cards = (reviewStats.results as Array<Record<string, unknown>>).flatMap((entry) =>
+        Array.isArray(entry.cards) ? entry.cards : []
+      );
+      assertTruthy(cards.length > 0, 'created flashcard should expose at least one native card');
       steps.push({ label: 'Create flashcard note', passed: true, durationMs: Date.now() - start });
     } catch (e) {
       steps.push({

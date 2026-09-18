@@ -172,6 +172,16 @@ export const ReadNoteSchema = z
   })
   .strict();
 
+export const ReviewStatsSchema = z
+  .object({
+    remIds: z
+      .array(z.string().min(1))
+      .min(1)
+      .max(100)
+      .describe('Rem IDs whose generated cards should be inspected'),
+  })
+  .strict();
+
 export const GetMediaSchema = z
   .object({
     remId: z.string().min(1).describe('Root Rem ID containing the image'),

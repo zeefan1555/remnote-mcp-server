@@ -191,6 +191,35 @@ describe('command text output', () => {
     executeSpy.mockRestore();
   });
 
+  it('formats review statistics without inventing a mastery score', async () => {
+    const { output, executeSpy } = await runTextCommand(['review-stats', 'rem-1', 'rem-2'], {
+      results: [
+        {
+          remId: 'rem-1',
+          cards: [
+            {
+              cardId: 'card-1',
+              type: 'forward',
+              createdAt: 100,
+              repetitionHistory: [{ date: 200, score: 1 }],
+              lastRepetitionTime: 200,
+              nextRepetitionTime: 300,
+              timesWrongInRow: 0,
+            },
+          ],
+        },
+        { remId: 'rem-2', cards: [] },
+      ],
+    });
+
+    expect(output).toContain('Rem rem-1: card card-1 (forward)');
+    expect(output).toContain('repetitions: 1');
+    expect(output).toContain('nextRepetitionTime: 300');
+    expect(output).toContain('Rem rem-2: no generated cards.');
+    expect(output).not.toContain('mastery');
+    executeSpy.mockRestore();
+  });
+
   it('formats search results with aliases and parent title without parent ID', async () => {
     const { output, executeSpy } = await runTextCommand(['search', 'plan'], {
       results: [

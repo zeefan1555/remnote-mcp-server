@@ -26,6 +26,7 @@ import {
   PLAYBOOK_TOOL,
   STATUS_TOOL,
   READ_TABLE_TOOL,
+  REVIEW_STATS_TOOL,
   ALL_TOOLS,
 } from '../../src/tools/index.js';
 import { WebSocketServer } from '../../src/websocket-server.js';
@@ -36,6 +37,7 @@ import {
   validSearchInput,
   validSearchByTagInput,
   validReadNoteInput,
+  validReviewStatsInput,
   validUpdateNoteInput,
   validSetDocumentStatusInput,
   validInsertChildrenInput,
@@ -49,6 +51,7 @@ import {
   sampleSearchResults,
   sampleStatusResult,
   sampleTableResult,
+  sampleReviewStatsResult,
 } from '../helpers/fixtures.js';
 import { createMockLogger } from '../setup.js';
 
@@ -478,6 +481,12 @@ describe('Tool Definitions', () => {
     expect(properties.totalRows).toBeDefined();
     expect(properties.rowsReturned).toBeDefined();
   });
+
+  it('should expose raw card review facts in REVIEW_STATS_TOOL', () => {
+    expect(REVIEW_STATS_TOOL.name).toBe('remnote_get_review_stats');
+    expect(REVIEW_STATS_TOOL.inputSchema.properties.remIds).toBeDefined();
+    expect(REVIEW_STATS_TOOL.outputSchema.properties.results).toBeDefined();
+  });
 });
 
 describe('Tool Registration', () => {
@@ -499,14 +508,14 @@ describe('Tool Registration', () => {
     expect(mockServer.hasHandler(ListToolsRequestSchema)).toBe(true);
   });
 
-  it('should return all 17 tools in list', async () => {
+  it('should return all 18 tools in list', async () => {
     registerAllTools(mockServer as never, mockWsServer as never, createMockLogger());
 
     const result = (await mockServer.callHandler(ListToolsRequestSchema, {})) as {
       tools: unknown[];
     };
 
-    expect(result.tools).toHaveLength(17);
+    expect(result.tools).toHaveLength(18);
   });
 
   it('should include all tool names in list', async () => {
@@ -521,6 +530,7 @@ describe('Tool Registration', () => {
     expect(names).toContain('remnote_search');
     expect(names).toContain('remnote_search_by_tag');
     expect(names).toContain('remnote_read_note');
+    expect(names).toContain('remnote_get_review_stats');
     expect(names).toContain('remnote_get_media');
     expect(names).toContain('remnote_update_note');
     expect(names).toContain('remnote_set_document_status');
@@ -532,6 +542,26 @@ describe('Tool Registration', () => {
     expect(names).toContain('remnote_get_playbook');
     expect(names).toContain('remnote_status');
     expect(names).toContain('remnote_read_table');
+  });
+});
+
+describe('Tool Handlers - review_stats', () => {
+  it('validates and forwards exact Rem IDs to the bridge', async () => {
+    const mockServer = new MockMCPServer();
+    const mockWsServer = {
+      sendRequest: vi.fn().mockResolvedValue(sampleReviewStatsResult),
+    };
+    registerAllTools(mockServer as never, mockWsServer as never, createMockLogger() as never);
+
+    const result = (await mockServer.callHandler(CallToolRequestSchema, {
+      params: { name: 'remnote_get_review_stats', arguments: validReviewStatsInput },
+    })) as ToolSuccessResult;
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith(
+      'get_review_stats',
+      validReviewStatsInput
+    );
+    expectStructuredToolResult(result, sampleReviewStatsResult);
   });
 });
 
@@ -1495,7 +1525,7 @@ describe('Tool Handlers - get_playbook', () => {
       params: { name: 'remnote_get_playbook', arguments: {} },
     })) as ToolSuccessResult;
 
-    expect(result.structuredContent?.playbookVersion).toBe('1.9.0');
+    expect(result.structuredContent?.playbookVersion).toBe('1.10.0');
     expect(Array.isArray(result.structuredContent?.decisionTree)).toBe(true);
     expect((result.structuredContent?.decisionTree as unknown[])?.length).toBeGreaterThan(0);
     expect(result.structuredContent?.decisionTree).toContain(
@@ -1521,6 +1551,9 @@ describe('Tool Handlers - get_playbook', () => {
     );
     expect(result.structuredContent?.decisionTree).toContain(
       'Need an embedded RemNote-managed image? Call remnote_read_note with includeMediaMetadata=true, then call remnote_get_media with the returned remId, field, and mediaId.'
+    );
+    expect(result.structuredContent?.decisionTree).toContain(
+      'Need evidence about whether existing flashcards have been reviewed? Use remnote_get_review_stats with their exact Rem IDs and interpret the returned native repetition history and scheduling fields; do not infer mastery from search hits or note age.'
     );
     expect(result.structuredContent?.decisionTree).toContain(
       'Need hierarchy placement context? Add ancestorDepth, typically 5, to search/read/search_by_tag/list_children; ancestors are direct-parent first.'

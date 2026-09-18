@@ -9,6 +9,7 @@ import {
   SearchSchema,
   SearchByTagSchema,
   ReadNoteSchema,
+  ReviewStatsSchema,
   UpdateNoteSchema,
   SetDocumentStatusSchema,
   InsertChildrenSchema,
@@ -18,6 +19,23 @@ import {
   AppendJournalSchema,
   ReadTableSchema,
 } from '../../src/schemas/remnote-schemas.js';
+
+describe('ReviewStatsSchema', () => {
+  it('accepts one or more non-empty Rem IDs', () => {
+    expect(ReviewStatsSchema.parse({ remIds: ['rem-1', 'rem-2'] })).toEqual({
+      remIds: ['rem-1', 'rem-2'],
+    });
+  });
+
+  it('rejects missing, empty, or oversized Rem ID lists', () => {
+    expect(() => ReviewStatsSchema.parse({})).toThrow();
+    expect(() => ReviewStatsSchema.parse({ remIds: [] })).toThrow();
+    expect(() => ReviewStatsSchema.parse({ remIds: [''] })).toThrow();
+    expect(() =>
+      ReviewStatsSchema.parse({ remIds: Array.from({ length: 101 }, (_, i) => `r${i}`) })
+    ).toThrow();
+  });
+});
 
 describe('CreateNoteSchema', () => {
   it('should validate with only title field', () => {

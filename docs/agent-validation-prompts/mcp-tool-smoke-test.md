@@ -16,6 +16,7 @@ This smoke test requires:
 - `remnote_search`
 - `remnote_create_note`
 - `remnote_read_note`
+- `remnote_get_review_stats`
 - `remnote_get_media`
 - `remnote_list_children`
 - `remnote_update_note`
@@ -63,6 +64,7 @@ Resolve all three by exact title and derive all Rem, property, field, and media 
    - Confirm the playbook mentions setting tag/table property values with `remnote_set_property`.
    - Confirm the playbook mentions exact inline Rem references with `[[id:<remId>]]`.
    - Confirm the playbook describes managed-image retrieval and real alias writes.
+   - Confirm the playbook recommends `remnote_get_review_stats` when review evidence is needed.
 
 3. Resolve the shared temporary integration-test root.
    - Search for the exact title `RemNote Automation Bridge [temporary integration test data]`.
@@ -193,7 +195,14 @@ content and matching structured metadata.
       `<prefix> [[RemNote Automation Bridge [temporary integration test data]]]`.
     - Do not clear the property. The kept value is part of the validation artifact.
 
-18. Optional/report-only checks:
+18. Read native review facts for the exact `Automation Bridge Test Media` flashcard Rem ID with
+    `remnote_get_review_stats`.
+    - Confirm the response contains one result for the requested Rem ID.
+    - Confirm its `cards` array is non-empty and each card includes `cardId`, `remId`, `type`, `createdAt`, and
+      `repetitionHistory`.
+    - Do not require prior repetitions; an empty `repetitionHistory` is a valid never-reviewed state.
+
+19. Optional/report-only checks:
     - If `remnote_replace_children` is available and `remnote_status.acceptReplaceOperation` is `true`, report that
       destructive replacement is enabled.
     - If destructive validation is explicitly approved, call `remnote_replace_children` on the run note with content
@@ -203,7 +212,7 @@ content and matching structured metadata.
       aliases, Rem type, tags, and parent are unchanged.
     - Do not call `remnote_replace_children` unless destructive validation is explicitly approved.
 
-19. Final response:
+20. Final response:
     - Report PASS or FAIL.
     - Include the root note Rem ID, run note Rem ID, and test tag Rem ID if created.
     - Include the Advanced Table Rem ID, `propertyFixtureTagRemId`, `automationLevelPropertyRemId`, and the kept

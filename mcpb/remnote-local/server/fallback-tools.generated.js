@@ -613,4 +613,26 @@ export const FALLBACK_TOOLS = [
       description: 'Provide exactly one of tableRemId or tableTitle.',
     },
   },
+  {
+    name: 'remnote_get_review_stats',
+    description:
+      'Read native RemNote review facts for every card generated from one or more exact Rem IDs. Returns raw scheduling and repetition history only; it does not calculate a custom mastery score.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        remIds: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 100,
+          items: {
+            type: 'string',
+            minLength: 1,
+          },
+          description: 'Exact Rem IDs whose generated cards should be inspected',
+        },
+      },
+      required: ['remIds'],
+      additionalProperties: false,
+    },
+  },
 ];

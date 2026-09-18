@@ -11,6 +11,7 @@ export const BRIDGE_ACTION_TO_TOOL: Readonly<Record<string, string>> = {
   search: 'remnote_search',
   search_by_tag: 'remnote_search_by_tag',
   read_note: 'remnote_read_note',
+  get_review_stats: 'remnote_get_review_stats',
   get_media: 'remnote_get_media',
   list_children: 'remnote_list_children',
   move_note: 'remnote_move_note',
