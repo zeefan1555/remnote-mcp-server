@@ -7,6 +7,13 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-09-19
+
+### Fixed
+
+- Make `outline collapse|expand --root-id` traverse the complete subtree across nested Documents and Portals without
+  wrapping presentation-state writes in a blocking data transaction.
+
 ## [0.21.0] - 2026-09-19
 
 ### Changed

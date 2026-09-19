@@ -660,14 +660,14 @@ export const FALLBACK_TOOLS = [
   {
     name: 'remnote_set_outline_collapsed',
     description:
-      "Preview or update collapsed state for every non-leaf Rem in a document/portal subtree or today's daily document, then verify each changed Rem in the same portal context.",
+      "Preview or update collapsed state for every non-leaf Rem below a root Rem or today's daily document, using each nested Document or Portal's real display context and verifying every change.",
     inputSchema: {
       type: 'object',
       properties: {
         rootRemId: {
           type: 'string',
           minLength: 1,
-          description: 'Document or portal root Rem ID',
+          description: 'Root Rem ID',
         },
         today: {
           type: 'boolean',

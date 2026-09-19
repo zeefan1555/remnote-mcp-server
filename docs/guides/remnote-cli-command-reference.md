@@ -256,16 +256,18 @@ the review schedule.
 
 ## outline
 
-Preview or update folding for every non-leaf Rem in one document or portal context:
+Preview or update folding for every non-leaf Rem below one root Rem:
 
 ```bash
 remnote-cli outline collapse --today
 remnote-cli outline collapse --today --apply
+remnote-cli outline collapse --root-id <wiki-rem-id> --apply
 remnote-cli outline expand --root-id <root-rem-id> --apply
 ```
 
 The command defaults to preview mode. `--apply` requires Bridge writes to be enabled and verifies each changed Rem in
-the selected portal context.
+its actual display context. Nested Document content uses that Document, Portal content uses the Portal Rem ID, and the
+selected root itself is not changed.
 
 ## todo
 

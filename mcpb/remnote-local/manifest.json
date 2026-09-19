@@ -94,7 +94,7 @@
     },
     {
       "name": "remnote_set_outline_collapsed",
-      "description": "Preview or update collapsed state for every non-leaf Rem in a document/portal subtree or today's daily document, then verify each changed Rem in the same portal context."
+      "description": "Preview or update collapsed state for every non-leaf Rem below a root Rem or today's daily document, using each nested Document or Portal's real display context and verifying every change."
     },
     {
       "name": "remnote_list_todos",

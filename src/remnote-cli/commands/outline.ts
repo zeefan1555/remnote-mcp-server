@@ -19,10 +19,10 @@ function registerOutlineAction(
   outline
     .command(name)
     .description(
-      `${name === 'collapse' ? 'Collapse' : 'Expand'} every non-leaf Rem in a document or portal`
+      `${name === 'collapse' ? 'Collapse' : 'Expand'} every non-leaf Rem below a root Rem`
     )
     .option('--today', "Use today's daily document as the root")
-    .option('--root-id <remId>', 'Document or portal root Rem ID')
+    .option('--root-id <remId>', 'Root Rem ID')
     .option('--apply', 'Apply the change; otherwise preview only')
     .action(async (opts) => {
       const format: OutputFormat = program.opts().text ? 'text' : 'json';

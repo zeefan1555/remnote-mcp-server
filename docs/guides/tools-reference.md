@@ -409,9 +409,10 @@ mastery score or modify the scheduler.
 
 ## remnote_set_outline_collapsed
 
-Preview or update the collapsed state of every non-leaf Rem in one document/portal context. Provide exactly one of
-`rootRemId` or `today: true`; `dryRun` defaults to `true`. Applied changes require write operations and are verified
-inside one Bridge transaction.
+Preview or update the collapsed state of every non-leaf Rem below a root. Provide exactly one of `rootRemId` or
+`today: true`; `dryRun` defaults to `true`. Nested Documents and Portals are traversed using their own display
+contexts. Applied changes require write operations and are verified one by one without wrapping display-state writes
+in a database transaction.
 
 ## remnote_list_todos
 
