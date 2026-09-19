@@ -83,7 +83,7 @@ const MATCHED_REM_SCHEMA = {
     remType: {
       type: 'string',
       description:
-        'Rem classification: document, dailyDocument, concept, descriptor, portal, or text',
+        'Rem classification: folder, document, dailyDocument, concept, descriptor, portal, or text',
     },
     parentRemId: {
       type: 'string',
@@ -322,7 +322,7 @@ export const SEARCH_TOOL = {
             remType: {
               type: 'string',
               description:
-                'Rem classification: document, dailyDocument, concept, descriptor, portal, or text',
+                'Rem classification: folder, document, dailyDocument, concept, descriptor, portal, or text',
             },
             matchedRems: {
               type: 'array',
@@ -393,7 +393,7 @@ export const SEARCH_TOOL = {
                   remType: {
                     type: 'string',
                     description:
-                      'Child Rem classification: document, dailyDocument, concept, descriptor, portal, or text',
+                      'Child Rem classification: folder, document, dailyDocument, concept, descriptor, portal, or text',
                   },
                   cardDirection: {
                     type: 'string',
@@ -613,7 +613,7 @@ export const READ_NOTE_TOOL = {
       remType: {
         type: 'string',
         description:
-          'Rem classification: document, dailyDocument, concept, descriptor, portal, or text',
+          'Rem classification: folder, document, dailyDocument, concept, descriptor, portal, or text',
       },
       cardDirection: {
         type: 'string',
@@ -657,7 +657,7 @@ export const READ_NOTE_TOOL = {
             remType: {
               type: 'string',
               description:
-                'Child Rem classification: document, dailyDocument, concept, descriptor, portal, or text',
+                'Child Rem classification: folder, document, dailyDocument, concept, descriptor, portal, or text',
             },
             cardDirection: {
               type: 'string',
@@ -937,7 +937,7 @@ export const SET_DOCUMENT_STATUS_TOOL = {
       },
       expectedOldRemType: {
         type: 'string',
-        enum: ['document', 'dailyDocument', 'concept', 'descriptor', 'portal', 'text'],
+        enum: ['folder', 'document', 'dailyDocument', 'concept', 'descriptor', 'portal', 'text'],
         description:
           'Optional stale-context guard; reject if current remType differs from this value',
       },

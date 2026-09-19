@@ -474,12 +474,22 @@ describe('SetDocumentStatusSchema', () => {
     expect(result.dryRun).toBe(false);
   });
 
+  it('should accept folder as expectedOldRemType', () => {
+    const result = SetDocumentStatusSchema.parse({
+      remId: 'folder-456',
+      isDocument: false,
+      expectedOldRemType: 'folder',
+    });
+
+    expect(result.expectedOldRemType).toBe('folder');
+  });
+
   it('should reject unknown expectedOldRemType', () => {
     expect(() =>
       SetDocumentStatusSchema.parse({
         remId: 'rem-456',
         isDocument: true,
-        expectedOldRemType: 'folder',
+        expectedOldRemType: 'unknown',
       })
     ).toThrow();
   });

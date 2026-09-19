@@ -337,7 +337,7 @@ export const FALLBACK_TOOLS = [
         },
         expectedOldRemType: {
           type: 'string',
-          enum: ['document', 'dailyDocument', 'concept', 'descriptor', 'portal', 'text'],
+          enum: ['folder', 'document', 'dailyDocument', 'concept', 'descriptor', 'portal', 'text'],
           description:
             'Optional stale-context guard; reject if current remType differs from this value',
         },

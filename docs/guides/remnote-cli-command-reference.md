@@ -408,7 +408,7 @@ remnote-cli set-document-status <rem-id> --no-document --apply
 | `--apply`                       | false   | Perform the change instead of dry-run preview                 |
 | `--expected-old-rem-type <type>` | none    | Reject stale context before changing document status          |
 
-Accepted `--expected-old-rem-type` values: `document`, `dailyDocument`, `concept`, `descriptor`, `portal`, `text`.
+Accepted `--expected-old-rem-type` values: `folder`, `document`, `dailyDocument`, `concept`, `descriptor`, `portal`, `text`.
 
 ## list-children
 

@@ -8,6 +8,7 @@ const DEFAULT_SEARCH_LIMIT = 50;
 
 /** Compact type prefixes for text output (empty for plain text Rems). */
 const TYPE_TAG: Record<string, string> = {
+  folder: '[folder] ',
   document: '[doc] ',
   dailyDocument: '[daily] ',
   concept: '[concept] ',

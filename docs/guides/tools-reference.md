@@ -518,7 +518,7 @@ then call again with `dryRun: false` and `expectedOldRemType` when the preview m
 | `remId` | string | Yes | Rem ID to update |
 | `isDocument` | boolean | Yes | Desired document status |
 | `dryRun` | boolean | No | Preview without mutation (default: `true`) |
-| `expectedOldRemType` | string | No | Stale-context guard: `document`, `dailyDocument`, `concept`, `descriptor`, `portal`, or `text` |
+| `expectedOldRemType` | string | No | Stale-context guard: `folder`, `document`, `dailyDocument`, `concept`, `descriptor`, `portal`, or `text` |
 
 **Preview marking a concept as a document:**
 ```

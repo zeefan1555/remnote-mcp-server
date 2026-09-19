@@ -18,6 +18,7 @@ const MAX_SDK_ARGS_BYTES = 100 * 1024;
 const ContentModeSchema = z.enum(['none', 'markdown', 'structured']);
 const ViewSchema = z.enum(['compact', 'standard', 'full']);
 const RemClassificationSchema = z.enum([
+  'folder',
   'document',
   'dailyDocument',
   'concept',

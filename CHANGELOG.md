@@ -7,6 +7,12 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-09-19
+
+### Fixed
+
+- Accept and display the Bridge `folder` Rem classification in MCP schemas, CLI output, stale-state guards, and docs.
+
 ## [0.22.0] - 2026-09-19
 
 ### Fixed
