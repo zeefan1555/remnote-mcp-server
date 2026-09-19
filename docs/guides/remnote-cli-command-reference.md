@@ -86,6 +86,7 @@ Behavior rules:
 - `--as-document` requires a title/root Rem and preserves any flashcard/concept status created by markdown syntax.
 - `--aliases` requires a title. Values are whitespace-normalized and deduplicated; matches to the primary title are
   ignored while Unicode and case are preserved.
+- Newly created non-leaf Rems are collapsed automatically in their nearest containing Document, daily note, or Portal.
 
 Examples:
 
@@ -426,6 +427,8 @@ remnote-cli list-children <parent-rem-id> --limit 50 --ancestor-depth 1
 
 Insert child Rems under a parent at an explicit position.
 
+Newly created non-leaf Rems are collapsed automatically in their nearest containing Document, daily note, or Portal.
+
 ```bash
 remnote-cli insert-children <parent-rem-id> --content <text> --position <first|last|before|after>
 ```
@@ -478,6 +481,8 @@ remnote-cli replace-children <parent-rem-id> --content-file <path>
 | `--content-file <path>` | none    | Read replacement content from UTF-8 file (`-` stdin; empty file clears content children) |
 
 Replacement content supports `[[id:<remId>]]` for exact inline references to existing Rems.
+Newly created non-leaf replacement Rems are collapsed automatically in their nearest containing Document, daily note,
+or Portal.
 
 ## update-tags
 
@@ -543,6 +548,7 @@ Behavior rules:
 - Content input from `--content`/`--content-file` supports RemNote's native markdown syntax for creating nested hierarchies and flashcards inline.
 - Journal content supports `[[id:<remId>]]` for exact inline references to existing Rems.
 - `--tag-ids` applies exact tag Rem IDs to the created journal entry root/top-level Rems. Tag names are not accepted.
+- Newly created non-leaf journal Rems are collapsed automatically in today's daily-note context.
 
 Examples:
 

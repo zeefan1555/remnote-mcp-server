@@ -10,7 +10,7 @@ export function registerJournalCommand(program: Command): void {
   const validate = (val: string) => validateNotFlag(val, subprogram);
 
   subprogram
-    .description("Append an entry to today's journal")
+    .description("Append to today's journal; new non-leaf Rems are collapsed automatically")
     .option(
       '--content <text>',
       'Journal entry content (use [[id:<remId>]] for exact references)',

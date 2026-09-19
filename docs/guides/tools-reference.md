@@ -57,6 +57,8 @@ Create a new note/flashcard in RemNote with optional parent hierarchy, exact tag
 Aliases are trimmed, internal whitespace runs collapse to one space, and normalized duplicates or aliases equal to the
 primary title are ignored. Comparison is case-sensitive and Unicode is preserved.
 
+Newly created non-leaf Rems are collapsed automatically in their nearest containing Document, daily note, or Portal.
+
 ### Usage
 
 **Create a simple note:**
@@ -595,6 +597,7 @@ identity, title, aliases, document status, tags, and properties remain unchanged
 | `content` | string | Yes | Markdown replacement content; empty string clears direct content children; supports `[[id:<remId>]]` |
 
 Bridge policy can reject this tool when `acceptReplaceOperation=false`.
+Newly created non-leaf replacement Rems are collapsed automatically in their containing outline context.
 
 ## remnote_update_tags
 
@@ -647,6 +650,8 @@ Examples:
 ## remnote_append_journal
 
 Append content to today's daily document in RemNote with optional exact tag Rem IDs.
+
+Newly created non-leaf journal Rems are collapsed automatically in the daily-note context.
 
 ### Parameters
 

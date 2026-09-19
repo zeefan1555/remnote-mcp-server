@@ -7,6 +7,13 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-09-19
+
+### Changed
+
+- Document that high-level create, child insertion/replacement, and journal commands automatically collapse newly
+  created non-leaf Rems in their containing document or portal context.
+
 ## [0.20.0] - 2026-09-18
 
 ### Added

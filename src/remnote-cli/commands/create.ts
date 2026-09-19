@@ -10,7 +10,7 @@ export function registerCreateCommand(program: Command): void {
   const validate = (val: string) => validateNotFlag(val, subprogram);
 
   subprogram
-    .description('Create a new note in RemNote (title or content required)')
+    .description('Create a note; newly created non-leaf Rems are collapsed automatically')
     .option('--title <text>', 'Note title (supports [[id:<remId>]] references)', validate)
     .option(
       '-c, --content <text>',

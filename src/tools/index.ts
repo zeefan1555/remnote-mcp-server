@@ -1981,6 +1981,7 @@ export function registerAllTools(
                 'remnote_set_document_status changes only document status; it preserves concept/card status and defaults to dryRun=true.',
                 'remnote_replace_children requires acceptReplaceOperation=true and preserves parent identity, title, aliases, document status, tags, and properties.',
                 'remnote_insert_children preserves existing child Rem IDs; remnote_replace_children removes existing direct content-child Rem IDs.',
+                'create_note, insert_children, replace_children, and append_journal automatically collapse newly created non-leaf Rems in their containing document or portal; use remnote_set_outline_collapsed only for existing content or explicit bulk changes.',
                 'remnote_move_note preserves the moved Rem ID and subtree; dryRun defaults to true.',
                 'remnote_set_outline_collapsed and remnote_update_todo default to dryRun=true and require acceptWriteOperations=true when applied.',
                 'All production tag writes use exact tag Rem IDs: create_note.tagRemIds, append_journal.tagRemIds, and update_tags add/remove arrays.',

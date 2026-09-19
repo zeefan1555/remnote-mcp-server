@@ -58,7 +58,7 @@ export function registerInsertChildrenCommand(program: Command): void {
   const validate = (val: string) => validateNotFlag(val, subprogram);
 
   subprogram
-    .description('Insert child Rems under a parent at a deterministic position')
+    .description('Insert child Rems; newly created non-leaf Rems are collapsed automatically')
     .option(
       '--content <text>',
       'Content to insert (use [[id:<remId>]] for exact references)',
@@ -115,7 +115,7 @@ export function registerReplaceChildrenCommand(program: Command): void {
   const validate = (val: string) => validateNotFlag(val, subprogram);
 
   subprogram
-    .description('Replace all direct child Rems under a parent')
+    .description('Replace direct children; newly created non-leaf Rems are collapsed automatically')
     .option(
       '--content <text>',
       'Replacement content (use [[id:<remId>]] for exact references)',
