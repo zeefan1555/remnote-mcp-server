@@ -4,21 +4,11 @@ import { EXIT } from '../config.js';
 import { formatError, formatResult, type OutputFormat } from '../output/formatter.js';
 import { readContentFileOrStdin } from './content-input.js';
 
-type Capability = {
-  id: string;
-  target: string;
-  namespace?: string;
-  method: string;
-  group: string;
-  command: string;
-  signatures: string[];
-  summary?: string;
-  status: string;
-  mode: string;
-  reason?: string;
-};
-
-type CapabilityResult = { sdkVersion: string; capabilities: Capability[] };
+import {
+  getSdkCapabilities,
+  type Capability,
+  type CapabilityResult,
+} from '../client/sdk-capability-cache.js';
 
 const SDK_GROUPS = [
   ['app', 'Application lifecycle and platform operations'],
@@ -151,7 +141,7 @@ function registerCapabilityCatalog(sdk: Command, program: Command): void {
       const format = outputFormat(program);
       const client = createCommandClient(program);
       try {
-        const result = (await client.execute('get_sdk_capabilities', {})) as CapabilityResult;
+        const result = await getSdkCapabilities(client, program.opts<{ mcpUrl: string }>().mcpUrl);
         const query = typeof opts.query === 'string' ? opts.query.toLowerCase() : undefined;
         const capabilities = result.capabilities.filter(
           (capability) =>
@@ -200,7 +190,7 @@ function registerCapabilityGroup(
     const format = outputFormat(program);
     const client = createCommandClient(program);
     try {
-      const result = (await client.execute('get_sdk_capabilities', {})) as CapabilityResult;
+      const result = await getSdkCapabilities(client, program.opts<{ mcpUrl: string }>().mcpUrl);
       if (!method) {
         console.log(groupHelp(result, group));
         return;
@@ -220,7 +210,10 @@ function registerCapabilityGroup(
         );
       }
 
-      const payload: Record<string, unknown> = { capability: capability.id };
+      const payload: Record<string, unknown> = {
+        capability: capability.id,
+        expectedCatalogHash: result.sdkCatalogHash,
+      };
       if (opts.targetId !== undefined) payload.targetId = opts.targetId as string;
       const args = await readArgs(opts as { argsJson?: string; argsFile?: string });
       if (args !== undefined) payload.args = args;

@@ -198,6 +198,10 @@ After installing the LaunchAgent, `remnote-mcp-server daemon status|start|stop|r
 | `remnote_search`          | Search knowledge base with optional card-only filtering and native review facts |
 | `remnote_search_by_tag`   | Search by exact tag Rem ID with ancestor-context resolution |
 | `remnote_read_note`       | Read note by ID with metadata, optional tag IDs/names, and markdown or structured content |
+| `remnote_inspect_many` | Bounded exact-ID read receipts |
+| `remnote_verify_scope` | Fresh scoped verification |
+| `remnote_flashcards_apply` | Preview/apply guarded flashcard plans |
+| `remnote_wiki_apply` | Preview/apply guarded Wiki plans |
 | `remnote_get_review_stats` | Read native review facts by exact IDs, root subtree, tag subtree, or today |
 | `remnote_set_outline_collapsed` | Preview or apply verified outline collapse/expand |
 | `remnote_list_todos`      | List exact-tag todos with native todo state |
@@ -365,3 +369,15 @@ MIT
 - [GitHub Issues](https://github.com/robert7/remnote-mcp-server/issues) - Bug reports and feature requests
 - [npm Package](https://www.npmjs.com/package/remnote-mcp-server) - Official npm package
 - [CHANGELOG](CHANGELOG.md) - Version history and roadmap
+
+### Bounded Task Commands (0.24.0)
+
+- `context --request <path|->` / `remnote_inspect_many`: exact-ID metadata and selectively requested content
+- `verify scope --expect <path|->` / `remnote_verify_scope`: fresh fail-closed structural/card checks
+- `flashcards apply --plan <path|-> --idempotency-key <key> [--apply]` / `remnote_flashcards_apply`
+- `wiki apply --plan <path|-> --idempotency-key <key> [--apply]` / `remnote_wiki_apply`
+
+Task apply defaults to preview; explicit `--apply` requires normal write authorization. Receipts include semantic IDs
+and metadata facts, never permission for blind replay. All commands avoid date lookup/creation. See the complete
+[read receipt](docs/guides/read-receipts.md) and [task plan](docs/guides/task-plans.md) contracts, including caller-owned
+calendar freshness, grouped-index fallback, and integrity-checked live SDK metadata caching.

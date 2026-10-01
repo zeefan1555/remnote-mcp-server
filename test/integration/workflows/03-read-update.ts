@@ -820,5 +820,55 @@ export async function readUpdateWorkflow(
     }
   }
 
+  {
+    const start = Date.now();
+    try {
+      const inspect = {
+        schemaVersion: 1,
+        remIds: [state.noteAId],
+        subtreeRootIds: [state.noteAId],
+      };
+      const receipt = await ctx.client.callTool('remnote_inspect_many', inspect);
+      assertEqual(receipt.complete, true, 'context complete');
+      const objects = receipt.objects as Array<Record<string, unknown>>;
+      const target = objects.find((o) => o.remId === state.noteAId);
+      assertTruthy(target, 'selected ID exists');
+      assertEqual(target!.contentIncluded, true, 'selected content included');
+      assertHasField(target, 'textHash', 'content hash');
+      for (const o of objects)
+        if (o.remId !== state.noteAId) {
+          assertEqual(o.contentIncluded, false, 'scope-only metadata');
+          assertTruthy(
+            !('text' in o) && !('title' in o) && !('aliases' in o),
+            'unselected content omitted'
+          );
+        }
+      const verified = await ctx.client.callTool('remnote_verify_scope', {
+        schemaVersion: 1,
+        inspect,
+        expectations: [{ kind: 'remType', remId: state.noteAId, value: target!.remType }],
+      });
+      assertEqual(verified.status, 'passed', 'fresh type verification');
+      const incomplete = await ctx.client.callTool('remnote_verify_scope', {
+        schemaVersion: 1,
+        inspect: { schemaVersion: 1, remIds: [state.noteAId] },
+        expectations: [{ kind: 'zeroCards', remId: state.noteAId }],
+      });
+      assertEqual(incomplete.status, 'incomplete', 'scope not selected cannot pass');
+      steps.push({
+        label: 'Composite context and verification receipts',
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: 'Composite context and verification receipts',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
   return { name: 'Read & Update', steps, skipped: false };
 }

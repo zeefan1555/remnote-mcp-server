@@ -16,6 +16,10 @@ This smoke test requires:
 - `remnote_search`
 - `remnote_create_note`
 - `remnote_read_note`
+- `remnote_inspect_many`
+- `remnote_verify_scope`
+- `remnote_flashcards_apply`
+- `remnote_wiki_apply`
 - `remnote_get_review_stats`
 - `remnote_set_outline_collapsed`
 - `remnote_list_todos`
@@ -234,3 +238,15 @@ content and matching structured metadata.
     - List optional/report-only tools and why they were skipped or not available.
     - Mention that artifacts, including the note carrying the kept `automation-level` value, can be cleaned up by
       searching RemNote for `[MCP-AGENT-TEST]`.
+
+## Composite validation
+
+Using already authorized test fixture IDs, call inspect_many schemaVersion1 with one explicit remId and its subtree
+root. Check complete/errors/readWindow, mandatory contentIncluded/textHash, and that only the explicit ID exposes
+title/text/aliases/backText. Verify a known parent/type expectation with verify_scope. Confirm an uncovered zeroCards
+scope returns incomplete rather than passed; never narrow required proof to force success.
+
+Validate flashcards_apply/wiki_apply only with dryRun:true unless the user separately authorized real task writes.
+Use exact known IDs and a stable test idempotency key, inspect metadata-only ids/facts and all checks/errors. Missing
+target previews must report incomplete without any created Rems. Commands must not look up dates/create diaries;
+native diary type alone cannot prove date freshness. The caller owns intended-date revalidation. No blind replay.

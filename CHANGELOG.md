@@ -7,6 +7,28 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-10-01
+
+### Added
+
+- Four bounded composites: `context`, `verify scope`, `flashcards apply`, and `wiki apply`, with matching MCP tools
+  and bridge actions; the tool surface is now 27. Read-only context supports explicit scopes/tags and selective raw
+  content; fresh verification fails closed on incomplete evidence. Task plans default to preview and use exact IDs,
+  hash-guarded patches, conservative receipt budgets and metadata-only idempotency receipts with ids/facts.
+- Live SDK catalog identity and format 2 metadata caching with exact endpoint/version/hash keys, payload and official
+  catalog digest verification, execution-time hash guards, and no offline/KB-content fallback.
+
+### Changed
+
+- Clarify non-atomic read windows, raw content only for explicit remIds, unchanged required WIKI/full-card proof scopes,
+  complete-receipt/nonzero failure output, 60-second bridge and 65-second CLI deadlines.
+- Composites never look up dates or create daily documents. Existing dailyRemId receives native dailyDocument
+  validation, not calendar-freshness proof; callers revalidate intended dates before new batches/after midnight, and
+  replay stays on the original diary. Document live gates immediately before mutations, known-created plain/untagged
+  Wiki object guards, full bounded grouped-index traversal and explicit section-targeted fallback before writes.
+- Align CLI help/skill, MCP playbook, references and guarded integration coverage; regenerate MCPB metadata.
+
+
 ## [0.23.0] - 2026-09-19
 
 ### Fixed

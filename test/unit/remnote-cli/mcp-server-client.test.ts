@@ -74,6 +74,10 @@ describe('McpServerClient', () => {
     ['list_children', 'remnote_list_children', { parentRemId: 'parent123' }],
     ['move_note', 'remnote_move_note', { remId: 'rem123', newParentRemId: 'parent123' }],
     ['get_sdk_capabilities', 'remnote_get_sdk_capabilities', {}],
+    ['inspect_many', 'remnote_inspect_many', { schemaVersion: 1, remIds: ['r'] }],
+    ['verify_scope', 'remnote_verify_scope', {}],
+    ['flashcards_apply', 'remnote_flashcards_apply', {}],
+    ['wiki_apply', 'remnote_wiki_apply', {}],
     ['sdk_call', 'remnote_sdk_call', { capability: 'rem.get-text', targetId: 'rem123' }],
     ['set_outline_collapsed', 'remnote_set_outline_collapsed', { today: true, collapsed: true }],
     ['list_todos', 'remnote_list_todos', { tagRemId: 'todo-tag' }],
@@ -96,10 +100,10 @@ describe('McpServerClient', () => {
     const client = new McpServerClient('http://127.0.0.1:3001');
     await client.execute(action, payload);
 
-    expect(mocks.callTool).toHaveBeenCalledWith({
-      name: toolName,
-      arguments: payload,
-    });
+    const request = { name: toolName, arguments: payload };
+    if (['inspect_many', 'verify_scope', 'flashcards_apply', 'wiki_apply'].includes(action))
+      expect(mocks.callTool).toHaveBeenCalledWith(request, undefined, { timeout: 65000 });
+    else expect(mocks.callTool).toHaveBeenCalledWith(request);
   });
 
   it('maps every bridge action used by CLI commands to an MCP tool', async () => {

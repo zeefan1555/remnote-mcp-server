@@ -531,14 +531,14 @@ describe('Tool Registration', () => {
     expect(mockServer.hasHandler(ListToolsRequestSchema)).toBe(true);
   });
 
-  it('should return all 23 tools in list', async () => {
+  it('should return all 27 tools in list', async () => {
     registerAllTools(mockServer as never, mockWsServer as never, createMockLogger());
 
     const result = (await mockServer.callHandler(ListToolsRequestSchema, {})) as {
       tools: unknown[];
     };
 
-    expect(result.tools).toHaveLength(23);
+    expect(result.tools).toHaveLength(27);
   });
 
   it('should include all tool names in list', async () => {
@@ -578,6 +578,9 @@ describe('Tool Handlers - sdk', () => {
     const mockServer = new MockMCPServer();
     const capabilities = {
       sdkVersion: '0.19.0',
+      sdkCatalogHash: 'a'.repeat(64),
+      serverVersion: '0.24.0',
+      bridgeVersion: '0.24.0',
       capabilities: [
         {
           id: 'rem:getText',
@@ -592,6 +595,10 @@ describe('Tool Handlers - sdk', () => {
       ],
     };
     const mockWsServer = {
+      isConnected: () => true,
+      getSdkIdentity: () => ({ sdkVersion: '0.19.0', sdkCatalogHash: 'a'.repeat(64) }),
+      getBridgeVersion: () => '0.24.0',
+      getServerVersion: () => '0.24.0',
       sendRequest: vi.fn().mockResolvedValueOnce(capabilities).mockResolvedValueOnce({
         capability: 'rem:getText',
         value: 'Title',
@@ -1689,7 +1696,7 @@ describe('Tool Handlers - get_playbook', () => {
       params: { name: 'remnote_get_playbook', arguments: {} },
     })) as ToolSuccessResult;
 
-    expect(result.structuredContent?.playbookVersion).toBe('1.12.0');
+    expect(result.structuredContent?.playbookVersion).toBe('1.13.0');
     expect(Array.isArray(result.structuredContent?.decisionTree)).toBe(true);
     expect((result.structuredContent?.decisionTree as unknown[])?.length).toBeGreaterThan(0);
     expect(result.structuredContent?.decisionTree).toContain(

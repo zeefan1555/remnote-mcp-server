@@ -1043,5 +1043,70 @@ export async function readUpdateWorkflow(
     }
   }
 
+  {
+    const start = Date.now();
+    try {
+      const inspect = {
+        schemaVersion: 1,
+        remIds: [state.noteAId],
+        subtreeRootIds: [state.noteAId],
+      };
+      const receipt = (await withTempContentFile(
+        JSON.stringify(inspect),
+        async (path) => await ctx.cli.runExpectSuccess(['context', '--request', path])
+      )) as Record<string, unknown>;
+      assertEqual(receipt.complete, true, 'context complete');
+      const objects = receipt.objects as Array<Record<string, unknown>>;
+      const target = objects.find((o) => o.remId === state.noteAId);
+      assertTruthy(target, 'selected ID exists');
+      assertEqual(target!.contentIncluded, true, 'selected content');
+      assertHasField(target, 'textHash', 'text hash');
+      for (const o of objects)
+        if (o.remId !== state.noteAId) {
+          assertEqual(o.contentIncluded, false, 'scope metadata');
+          assertTruthy(
+            !('text' in o) && !('title' in o) && !('aliases' in o),
+            'unselected content omitted'
+          );
+        }
+      const verify = {
+        schemaVersion: 1,
+        inspect,
+        expectations: [{ kind: 'remType', remId: state.noteAId, value: target!.remType }],
+      };
+      const result = (await withTempContentFile(
+        JSON.stringify(verify),
+        async (path) => await ctx.cli.runExpectSuccess(['verify', 'scope', '--expect', path])
+      )) as Record<string, unknown>;
+      assertEqual(result.status, 'passed', 'verify');
+      const uncovered = {
+        schemaVersion: 1,
+        inspect: { schemaVersion: 1, remIds: [state.noteAId] },
+        expectations: [{ kind: 'zeroCards', remId: state.noteAId }],
+      };
+      const failed = await withTempContentFile(
+        JSON.stringify(uncovered),
+        async (path) => await ctx.cli.runExpectError(['verify', 'scope', '--expect', path])
+      );
+      assertEqual(
+        (failed.json as Record<string, unknown>).status,
+        'incomplete',
+        'receipt retained on failed scope'
+      );
+      steps.push({
+        label: 'Composite context and verification receipts',
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: 'Composite context and verification receipts',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
   return { name: 'Read & Update', steps, skipped: false };
 }

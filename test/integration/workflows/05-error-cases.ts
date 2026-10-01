@@ -209,5 +209,56 @@ export async function errorCasesWorkflow(
     }
   }
 
+  // Preview-only probes never create fixtures or daily documents.
+  for (const kind of ['flashcards', 'wiki'] as const) {
+    const start = Date.now();
+    const missing = `missing-task-${ctx.runId}`;
+    const plan =
+      kind === 'flashcards'
+        ? {
+            schemaVersion: 1,
+            dailyRemId: missing,
+            homeRootId: missing,
+            tagRemId: missing,
+            newCards: [{ key: 'card', question: 'Preview?', answer: [['No write.']] }],
+          }
+        : {
+            schemaVersion: 1,
+            wikiRootId: missing,
+            partitionRemId: missing,
+            indexRemId: missing,
+            logRemId: missing,
+            pages: [{ key: 'page', title: 'Preview', nodes: [], summary: ['No write.'] }],
+          };
+    try {
+      const receipt = await ctx.client.callTool(`remnote_${kind}_apply`, {
+        schemaVersion: 1,
+        plan,
+        dryRun: true,
+        idempotencyKey: `preview-${kind}-${ctx.runId.replace(/[^A-Za-z0-9._-]/g, '-')}`,
+      });
+      assertTruthy(
+        receipt.status === 'incomplete' && receipt.complete === false,
+        'missing target cannot pass'
+      );
+      assertTruthy(
+        Array.isArray(receipt.created) && receipt.created.length === 0,
+        'preview creates no Rems'
+      );
+      steps.push({
+        label: `${kind} missing-target preview receipt`,
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: `${kind} missing-target preview receipt`,
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
   return { name: 'Error Cases', steps, skipped: false };
 }

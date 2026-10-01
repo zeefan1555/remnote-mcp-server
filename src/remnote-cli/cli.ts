@@ -1,3 +1,5 @@
+import { registerCompositeCommands } from './commands/composite.js';
+import { registerTaskCommands } from './commands/task.js';
 import { Command } from 'commander';
 import { createRequire } from 'node:module';
 import { DEFAULT_MCP_URL } from './config.js';
@@ -50,6 +52,8 @@ export function createProgram(version: string): Command {
   registerSearchByTagCommand(program);
   registerListChildrenCommand(program);
   registerReadCommand(program);
+  registerCompositeCommands(program);
+  registerTaskCommands(program);
   registerReviewStatsCommand(program);
   registerOutlineCommand(program);
   registerTodoCommand(program);

@@ -588,3 +588,29 @@ Examples:
 remnote-cli status
 remnote-cli --mcp-url http://127.0.0.1:3005/mcp status --text
 ```
+
+## Task Composites (schemaVersion=1)
+
+| CLI | MCP tool | Bridge action |
+|-----|----------|---------------|
+| `context --request <path or ->` | `remnote_inspect_many` | `inspect_many` |
+| `verify scope --expect <path or ->` | `remnote_verify_scope` | `verify_scope` |
+| `flashcards apply --plan <path or -> --idempotency-key KEY [--apply]` | `remnote_flashcards_apply` | `flashcards_apply` |
+| `wiki apply --plan <path or -> --idempotency-key KEY [--apply]` | `remnote_wiki_apply` | `wiki_apply` |
+
+[Read receipts](read-receipts.md) documents every selector/check/receipt field and [task plans](task-plans.md) every
+inner plan, bound, text segment and apply receipt. Leaf `--help` includes examples and schemas for installed agents.
+Read input is the whole request; apply files contain only the inner plan. Preview is default. Full receipts precede
+nonzero exits on failed/incomplete reads or nonverified apply. Required WIKI/card proof scopes must not be narrowed
+merely to pass. Raw context title/text/backText/aliases are limited to explicit remIds; task ids/facts contain metadata.
+
+Preview/apply never look up dates or create daily documents. Native dailyDocument type does not prove calendar
+freshness without a date scalar. Caller revalidates intended dates before new batches/after midnight; replay keeps
+the original diary. Live write gates are rechecked immediately before each SDK mutation after awaits; known-created
+Wiki objects must remain plain/ordinary/untagged non-card. Existing grouped-index entries use the full bounded tree;
+missing/new grouped entries fail before writes and require reviewed exact-section fallback. Do not flatten/guess.
+
+SDK discovery additionally accepts optional `identityOnly:true`, returning live version/hash identity and empty
+capabilities without a bridge round trip. Normal results include sdkVersion/sdkCatalogHash/serverVersion/bridgeVersion.
+SDK calls accept optional lowercase 64-hex expectedCatalogHash; mismatches fail closed before invocation. The CLI
+cache is metadata-only, validates payload and official digests, and has no offline fallback.

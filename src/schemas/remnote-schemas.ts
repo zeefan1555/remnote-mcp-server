@@ -259,11 +259,18 @@ export const UpdateTodoSchema = z
     path: ['doneTagRemId'],
   });
 
-export const GetSdkCapabilitiesSchema = z.object({}).strict().default({});
+export const GetSdkCapabilitiesSchema = z
+  .object({ identityOnly: z.boolean().optional() })
+  .strict()
+  .default({});
 
 export const SdkCallSchema = z
   .object({
     capability: z.string().min(1).describe('Capability ID returned by get_sdk_capabilities'),
+    expectedCatalogHash: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional(),
     targetId: z.string().min(1).optional().describe('Target Rem or SDK object ID when required'),
     args: z.array(JsonValueSchema).max(100).default([]).describe('Positional JSON arguments'),
     allowDestructive: z

@@ -24,8 +24,12 @@ When changing action names, payloads, or response semantics, validate this repo 
 
 ## Contract Map (Current)
 
-### External MCP Tool Surface (23)
+### External MCP Tool Surface (27)
 
+- `remnote_inspect_many`
+- `remnote_verify_scope`
+- `remnote_flashcards_apply`
+- `remnote_wiki_apply`
 - `remnote_create_note`
 - `remnote_search`
 - `remnote_search_by_tag`
@@ -52,6 +56,10 @@ When changing action names, payloads, or response semantics, validate this repo 
 
 ### Bundled CLI Command Surface
 
+- `remnote-cli context --request <path|->`
+- `remnote-cli verify scope --expect <path|->`
+- `remnote-cli flashcards apply --plan <path|-> --idempotency-key <key> [--apply]`
+- `remnote-cli wiki apply --plan <path|-> --idempotency-key <key> [--apply]`
 - `remnote-cli create`
 - `remnote-cli search`
 - `remnote-cli search-by-tag`
@@ -93,6 +101,8 @@ Projects are still `0.x`; prefer the same minor line across bridge and server pa
 - `src/http-server.ts` - MCP HTTP transport/session lifecycle
 - `src/websocket-server.ts` - plugin connection, request correlation, timeouts, `hello` handling
 - `src/tools/index.ts` - MCP tool registration and dispatch
+- `src/schemas/composite-schemas.ts`, `src/schemas/task-schemas.ts` - bounded schema-1 composite contracts
+- `src/tools/composite.ts`, `src/tools/task.ts` - receipt metadata and task tool definitions
 - `src/schemas/remnote-schemas.ts` - Zod input/output schema contracts
 - `src/remnote-cli/` - bundled CLI command parser, MCP client, command payload mapping, and output formatting
 - `mcpb/remnote-local/server/index.js` - stdio MCP proxy used by `remnote-mcp-stdio` and the Claude Desktop MCPB
@@ -210,3 +220,12 @@ This user-maintained fork follows a single-maintainer workflow. For requested ch
 commit directly on `main`, and push to `origin/main`. Do not open or update a pull request unless the user explicitly
 asks for one. Use `.agents/dev-workflow.md` for implementation and verification details that do not conflict with this
 direct-main policy.
+
+## Task Composite Contracts
+
+See [read receipts](docs/guides/read-receipts.md) and [task plans](docs/guides/task-plans.md). All four composites use a
+60-second bridge deadline and 65-second CLI timeout. Context raw text is restricted to explicit remIds; required proof
+scopes cannot be narrowed to pass. Task plans default to preview, use hash guards and stable metadata journals, and
+return semantic ids plus targeted facts. No date lookup/creation, delete/replace/move, or rollback promise. Caller owns
+calendar freshness; replay keeps the recorded diary. SDK cache format 2 validates live exact identity, payload digest
+and official catalog hash. Never cache KB content or offline connectivity.

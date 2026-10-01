@@ -22,6 +22,8 @@ export class WebSocketServer {
   private responseLogger: Logger | null = null;
   private serverVersion: string;
   private bridgeVersion: string | null = null;
+  private sdkVersion: string | null = null;
+  private sdkCatalogHash: string | null = null;
   private clientAccepted = false;
   private helloTimeout: NodeJS.Timeout | null = null;
   private pendingRequests = new Map<
@@ -109,6 +111,8 @@ export class WebSocketServer {
           if (this.client === ws) {
             this.client = null;
             this.bridgeVersion = null;
+            this.sdkVersion = null;
+            this.sdkCatalogHash = null;
             this.clientAccepted = false;
             this.clearHelloTimeout();
           }
@@ -138,6 +142,8 @@ export class WebSocketServer {
         this.client.close();
         this.client = null;
         this.bridgeVersion = null;
+        this.sdkVersion = null;
+        this.sdkCatalogHash = null;
         this.clientAccepted = false;
         this.clearHelloTimeout();
       }
@@ -233,6 +239,11 @@ export class WebSocketServer {
     return this.bridgeVersion;
   }
 
+  getSdkIdentity(): { sdkVersion: string; sdkCatalogHash: string } | null {
+    if (!this.isConnected() || !this.sdkVersion || !this.sdkCatalogHash) return null;
+    return { sdkVersion: this.sdkVersion, sdkCatalogHash: this.sdkCatalogHash };
+  }
+
   getServerVersion(): string {
     return this.serverVersion;
   }
@@ -269,6 +280,15 @@ export class WebSocketServer {
           return;
         }
 
+        this.sdkVersion =
+          typeof message.sdkVersion === 'string' && message.sdkVersion.length > 0
+            ? message.sdkVersion
+            : null;
+        this.sdkCatalogHash =
+          typeof message.sdkCatalogHash === 'string' &&
+          /^[a-f0-9]{64}$/.test(message.sdkCatalogHash)
+            ? message.sdkCatalogHash
+            : null;
         this.bridgeVersion = message.version;
         this.clientAccepted = true;
         this.clearHelloTimeout();

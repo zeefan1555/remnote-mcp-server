@@ -1,3 +1,9 @@
+vi.mock('../../../src/remnote-cli/client/sdk-capability-cache.js', () => ({
+  getSdkCapabilities: async (client: McpServerClient) => ({
+    ...((await client.execute('get_sdk_capabilities', {})) as Record<string, unknown>),
+    sdkCatalogHash: 'a'.repeat(64),
+  }),
+}));
 import { describe, expect, it, vi, type MockInstance } from 'vitest';
 import { McpServerClient } from '../../../src/remnote-cli/client/mcp-server-client.js';
 import { createProgram } from '../../../src/remnote-cli/cli.js';
