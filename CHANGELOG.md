@@ -7,6 +7,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Optional flashcards plan field `cardCluster` (boolean, default off when omitted). `false` also stays off. `true`
+  opts into the Card Cluster (`cc`) powerup and requires a title plus at least two new cards.
+
 ## [0.24.0] - 2026-10-01
 
 ### Added

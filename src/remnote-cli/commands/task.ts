@@ -25,9 +25,11 @@ const help = {
   flashcards: [
     'Plan shape:',
     '  {"schemaVersion":1,"dailyRemId":"DAILY_ID","homeRootId":"HOME_ID","tagRemId":"TAG_ID","title":"Optional cluster title","newCards":[{"key":"card-a","question":"Question?","answer":[["Answer."]]}],"answerPatches":[],"reusedCardRemIds":[]}',
-    'newCards, answerPatches, reusedCardRemIds and title are optional; at least one new/patch/reused card is required.',
+    'newCards, answerPatches, reusedCardRemIds, title and cardCluster are optional; at least one new/patch/reused card is required.',
     'newCards <=7; answer lines 1..100; answerPatches/reusedCardRemIds <=100.',
     'A title is required for two or more new cards. pageKey segments are forbidden.',
+    'cardCluster is an optional boolean and defaults off when omitted. false also leaves Card Cluster off.',
+    'Only cardCluster true opts into the cc powerup, which requires a title and at least two new cards.',
     'dailyRemId must name an explicit existing dailyDocument; native type validation cannot prove calendar freshness.',
     'No date scalar is supplied. The caller resolves/revalidates the intended date before a new batch and after midnight.',
     'Replay uses the original recorded diary; it never switches an existing batch to a newly resolved date.',

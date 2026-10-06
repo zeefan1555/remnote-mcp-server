@@ -285,6 +285,8 @@ references, children, ancestor, cardRemIds, zeroCards. Scope checks require expl
 require tagRemIds. Incomplete evidence never passes; keep REQUIRED whole-WIKI/full-card scope intact.
 
 `flashcards apply` and `wiki apply` require --plan <path|-> (inner schemaVersion=1 plan) and a stable --idempotency-key.
+Optional flashcards field `cardCluster` is a boolean and defaults off when omitted. `false` also leaves Card Cluster
+off. Set `cardCluster` true only to opt into the `cc` powerup; that requires a title and at least two new cards.
 Preview first; use --apply only after the existing confirm-write procedure. TextSegments accept literals and exact
 {remId}; Wiki additionally accepts {pageKey} declared in its plan. Existing text patches require current textHash; new
 Wiki nodes omit remId/hash. Keys are unique, input bounded 100 KiB, aggregate ids/facts budget 1000 incl patch card/answer

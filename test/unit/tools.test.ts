@@ -1696,7 +1696,7 @@ describe('Tool Handlers - get_playbook', () => {
       params: { name: 'remnote_get_playbook', arguments: {} },
     })) as ToolSuccessResult;
 
-    expect(result.structuredContent?.playbookVersion).toBe('1.13.0');
+    expect(result.structuredContent?.playbookVersion).toBe('1.14.0');
     expect(Array.isArray(result.structuredContent?.decisionTree)).toBe(true);
     expect((result.structuredContent?.decisionTree as unknown[])?.length).toBeGreaterThan(0);
     expect(result.structuredContent?.decisionTree).toContain(
@@ -1725,6 +1725,9 @@ describe('Tool Handlers - get_playbook', () => {
     );
     expect(result.structuredContent?.decisionTree).toContain(
       'Need evidence about whether existing flashcards have been reviewed? Use remnote_get_review_stats with exactly one scope: remIds, rootRemId, tagRemId, or today=true. Interpret native repetition history and scheduling fields; do not infer mastery from search hits or note age.'
+    );
+    expect(result.structuredContent?.decisionTree).toContain(
+      'Flashcard Card Cluster (cc) is opt-in via optional plan.cardCluster. Omit the field or set false to leave cc off. Set true only with a title and at least two new cards; the bridge adds cc only then.'
     );
     expect(result.structuredContent?.decisionTree).toContain(
       'Need hierarchy placement context? Add ancestorDepth, typically 5, to search/read/search_by_tag/list_children; ancestors are direct-parent first.'

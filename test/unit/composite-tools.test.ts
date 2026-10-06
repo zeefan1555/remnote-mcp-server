@@ -162,6 +162,58 @@ describe('composite MCP receipts', () => {
     ).toBe(false);
     expect(check({ ...output, status: 'success' }).valid).toBe(false);
   });
+  it('advertises optional cardCluster without requiring it', () => {
+    const plan = FLASHCARDS_APPLY_TOOL.inputSchema.properties.plan as {
+      properties: { cardCluster: { type: string } };
+      required: string[];
+    };
+    expect(plan.properties.cardCluster).toEqual({ type: 'boolean' });
+    expect(plan.required).not.toContain('cardCluster');
+    expect(FLASHCARDS_APPLY_TOOL.description).toContain('plan.cardCluster');
+    expect(FLASHCARDS_APPLY_TOOL.description).toContain('defaults off when omitted');
+  });
+  it('forwards cardCluster only when the plan sets it', async () => {
+    const base = {
+      schemaVersion: 1,
+      dailyRemId: 'd',
+      homeRootId: 'h',
+      tagRemId: 't',
+      title: 'Topic',
+      newCards: [
+        { key: 'a', question: 'A?', answer: [['A']] },
+        { key: 'b', question: 'B?', answer: [['B']] },
+      ],
+    };
+    await call('remnote_flashcards_apply', {
+      schemaVersion: 1,
+      plan: base,
+      idempotencyKey: 'batch',
+    });
+    expect(ws.sendRequest.mock.calls[0][1].plan).not.toHaveProperty('cardCluster');
+    await call('remnote_flashcards_apply', {
+      schemaVersion: 1,
+      plan: { ...base, cardCluster: false },
+      idempotencyKey: 'batch-off',
+    });
+    expect(ws.sendRequest.mock.calls[1][1].plan.cardCluster).toBe(false);
+    await call('remnote_flashcards_apply', {
+      schemaVersion: 1,
+      plan: { ...base, cardCluster: true },
+      idempotencyKey: 'batch-on',
+    });
+    expect(ws.sendRequest.mock.calls[2][1].plan.cardCluster).toBe(true);
+    ws.sendRequest.mockClear();
+    expect(
+      (
+        await call('remnote_flashcards_apply', {
+          schemaVersion: 1,
+          plan: { ...base, newCards: [base.newCards[0]], cardCluster: true },
+          idempotencyKey: 'batch-bad',
+        })
+      ).isError
+    ).toBe(true);
+    expect(ws.sendRequest).not.toHaveBeenCalled();
+  });
   it('advertises repaired diary and mutation boundaries', () => {
     expect(FLASHCARDS_APPLY_TOOL.description).toContain('ID/type cannot prove calendar freshness');
     expect(FLASHCARDS_APPLY_TOOL.description).toContain('original recorded diary');

@@ -247,6 +247,8 @@ title/text/aliases/backText. Verify a known parent/type expectation with verify_
 scope returns incomplete rather than passed; never narrow required proof to force success.
 
 Validate flashcards_apply/wiki_apply only with dryRun:true unless the user separately authorized real task writes.
-Use exact known IDs and a stable test idempotency key, inspect metadata-only ids/facts and all checks/errors. Missing
-target previews must report incomplete without any created Rems. Commands must not look up dates/create diaries;
+Flashcard plans may omit `cardCluster`. Omitted and `false` stay off; `true` opts into Card Cluster and needs a title
+plus at least two new cards. Use exact known IDs and a stable test idempotency key, inspect metadata-only ids/facts
+and all checks/errors. Missing target previews must report incomplete without any created Rems. Commands must not look
+up dates/create diaries;
 native diary type alone cannot prove date freshness. The caller owns intended-date revalidation. No blind replay.

@@ -33,6 +33,7 @@ export const FlashcardsPlanSchema = z
     homeRootId: RemId,
     tagRemId: RemId,
     title: Title.optional(),
+    cardCluster: z.boolean().optional(),
     newCards: z
       .array(
         z.object({ key: Key, question: Title, answer: z.array(PlainText).min(1).max(100) }).strict()
@@ -64,6 +65,12 @@ export const FlashcardsPlanSchema = z
         code: 'custom',
         path: ['title'],
         message: 'A cluster title is required for two or more new cards',
+      });
+    if (plan.cardCluster === true && ((plan.newCards?.length ?? 0) < 2 || !plan.title))
+      ctx.addIssue({
+        code: 'custom',
+        path: ['cardCluster'],
+        message: 'cardCluster requires a title and at least two new cards',
       });
   });
 const WikiNode = z

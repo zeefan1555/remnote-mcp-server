@@ -1004,7 +1004,9 @@ AI agents can chain multiple tools:
 | `wiki apply --plan <path or -> --idempotency-key KEY [--apply]` | `remnote_wiki_apply` | `wiki_apply` |
 
 [Read receipts](read-receipts.md) documents every selector/check/receipt field and [task plans](task-plans.md) every
-inner plan, bound, text segment and apply receipt. Leaf `--help` includes examples and schemas for installed agents.
+inner plan, bound, text segment and apply receipt. Flashcard `cardCluster` is an optional boolean and defaults off
+when omitted; only `true` opts into the Card Cluster (`cc`) powerup, which requires a title and at least two new cards.
+Leaf `--help` includes examples and schemas for installed agents.
 Read input is the whole request; apply files contain only the inner plan. Preview is default. Full receipts precede
 nonzero exits on failed/incomplete reads or nonverified apply. Required WIKI/card proof scopes must not be narrowed
 merely to pass. Raw context title/text/backText/aliases are limited to explicit remIds; task ids/facts contain metadata.

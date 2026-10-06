@@ -102,7 +102,8 @@ Potential architectural improvements for consideration:
 Four actions map directly across CLI/MCP/bridge: context→inspect_many, verify scope→verify_scope, flashcards
 apply→flashcards_apply, wiki apply→wiki_apply. Read receipts are non-atomic read windows with request-local dedup,
 explicit completeness/errors, contentIncluded/textHash and raw text only for explicit remIds. Plans use bounded typed
-segments, stale-text hashes, preview defaults and metadata-only journals. Task receipts return semantic IDs and
+segments, stale-text hashes, preview defaults and metadata-only journals. Flashcard `cardCluster` is an optional
+boolean that defaults off when omitted; only `true` opts into the Card Cluster powerup. Task receipts return semantic IDs and
 selected hash/card-ID facts; neither receipt nor SDK cache is a persisted KB-text copy.
 
 Bridge hello advertises sdkVersion/sdkCatalogHash. identityOnly capability discovery reads accepted live hello without

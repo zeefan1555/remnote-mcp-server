@@ -129,6 +129,53 @@ describe('four composite commands', () => {
       expect(JSON.parse(log.mock.calls[0][0])).toEqual({ ...taskReceipt, kind });
     }
   );
+  it('forwards optional cardCluster and rejects an incomplete opt-in before dispatch', async () => {
+    const card = { key: 'a', question: 'A?', answer: [['A']] };
+    const base = {
+      schemaVersion: 1,
+      dailyRemId: 'day',
+      homeRootId: 'home',
+      tagRemId: 'tag',
+      title: 'Topic',
+      newCards: [card, { ...card, key: 'b', question: 'B?', answer: [['B']] }],
+    };
+    vi.mocked(readContentFileOrStdin).mockResolvedValue(JSON.stringify(base));
+    const execute = vi.spyOn(McpServerClient.prototype, 'execute').mockResolvedValue(taskReceipt);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    await createProgram('test').parseAsync(
+      ['flashcards', 'apply', '--plan', '-', '--idempotency-key', 'batch'],
+      { from: 'user' }
+    );
+    expect(execute).toHaveBeenCalledWith('flashcards_apply', {
+      schemaVersion: 1,
+      plan: base,
+      idempotencyKey: 'batch',
+      dryRun: true,
+    });
+    vi.mocked(readContentFileOrStdin).mockResolvedValue(
+      JSON.stringify({ ...base, cardCluster: true })
+    );
+    await createProgram('test').parseAsync(
+      ['flashcards', 'apply', '--plan', '-', '--idempotency-key', 'batch-on'],
+      { from: 'user' }
+    );
+    expect(execute).toHaveBeenLastCalledWith('flashcards_apply', {
+      schemaVersion: 1,
+      plan: { ...base, cardCluster: true },
+      idempotencyKey: 'batch-on',
+      dryRun: true,
+    });
+    execute.mockClear();
+    vi.mocked(readContentFileOrStdin).mockResolvedValue(
+      JSON.stringify({ ...base, newCards: [card], cardCluster: true })
+    );
+    await createProgram('test').parseAsync(
+      ['flashcards', 'apply', '--plan', '-', '--idempotency-key', 'batch-bad'],
+      { from: 'user' }
+    );
+    expect(execute).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
+  });
   it.each(['preview', 'verified', 'partial', 'unknown', 'incomplete', 'conflict'])(
     'applied receipt %s only succeeds for verified',
     async (status) => {
@@ -191,6 +238,7 @@ describe('four composite commands', () => {
       'cardRemIds',
       'zeroCards',
       'dailyRemId',
+      'cardCluster',
       'answerPatches',
       'expectedTextHash',
       'pageKey',

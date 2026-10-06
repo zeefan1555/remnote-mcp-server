@@ -46,9 +46,14 @@ hash is a conflict, not permission to bypass the guard.
 ```
 
 `dailyRemId`, `homeRootId`, and `tagRemId` are required existing IDs. `newCards`, `answerPatches`,
-`reusedCardRemIds`, and `title` are optional. At least one new/patch/reused card is required. `newCards` allows at most
-7 entries; each requires `key`, `question`, and 1–100 answer lines, each a TextSegments array. Two or more new cards
-require a cluster title. Patches and reused Rem IDs allow at most 100 each. Reuse uses Rem IDs, not native card IDs.
+`reusedCardRemIds`, `title`, and `cardCluster` are optional. At least one new/patch/reused card is required. `newCards`
+allows at most 7 entries; each requires `key`, `question`, and 1–100 answer lines, each a TextSegments array. Two or
+more new cards require a cluster title. Patches and reused Rem IDs allow at most 100 each. Reuse uses Rem IDs, not
+native card IDs.
+
+`cardCluster` is an optional boolean and defaults off when omitted. `false` also leaves Card Cluster off. Only `true`
+opts into the Card Cluster (`cc`) powerup, which requires a title and at least two new cards. The field does not need
+to be sent for the default. The bridge adds `cc` only when the value is `true`.
 
 `dailyRemId` must be an explicit existing native `dailyDocument`. Type validation receives no date scalar and cannot
 prove calendar freshness. The caller resolves/revalidates the intended calendar date before a new batch and after

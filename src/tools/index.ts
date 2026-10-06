@@ -1992,7 +1992,7 @@ export function registerAllTools(
           }
 
           result = {
-            playbookVersion: '1.13.0',
+            playbookVersion: '1.14.0',
             summary:
               'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, inspect native card review facts by ID or scope, manage outline folding and tagged todos, discover optional Plugin SDK capabilities, retrieve managed images, and apply safe metadata writes.',
             recommendedStatusCheck: {
@@ -2006,6 +2006,7 @@ export function registerAllTools(
               'Need exact IDs, structure, references, powerups and native cards together? Prefer remnote_inspect_many with schemaVersion=1 and explicit remIds/subtreeRootIds/tagRemIds. Only explicit remIds return title/text/aliases; metadata includes contentIncluded and textHash. Read windows are not atomic; inspect complete/errors.',
               'Need to verify structural/card expectations? Use remnote_verify_scope with explicit expectations, subtreeRootIds for whole-scope proof and tagRemIds for inverse membership. Only status=passed succeeds; never narrow required WIKI/full-card scopes merely to pass.',
               'Need a bounded flashcard or WIKI workflow? Preview remnote_flashcards_apply or remnote_wiki_apply with dryRun=true, exact-ID plans, stable idempotencyKey and expectedTextHash for patches. Apply only after approval. Only complete verified receipts mean applied success. Use ids/facts without guessing creation order; semantic text still requires exact-ID review. Never blindly replay partial/unknown/conflict/incomplete writes. No delete/replace/move or rollback guarantee.',
+              'Flashcard Card Cluster (cc) is opt-in via optional plan.cardCluster. Omit the field or set false to leave cc off. Set true only with a title and at least two new cards; the bridge adds cc only then.',
               'Flashcard composites use an explicit existing dailyRemId and validate native dailyDocument type, with no date lookup or daily-document creation. ID/type cannot prove calendar freshness: the caller resolves/revalidates the intended date before a new batch and after midnight; replay retains the original recorded diary.',
               'Task setters recheck the live write gate immediately before each SDK mutation after awaited reads. Known-created Wiki objects must remain ordinary, plain, untagged non-card text. Existing grouped-index entries are searched through the full bounded tree; a missing/new grouped entry fails before writes and requires an explicit section-targeted fallback.',
 

@@ -95,6 +95,42 @@ describe('task plan contract', () => {
   ])('rejects unsafe Wiki input %#', (v) =>
     expect(WikiPlanSchema.safeParse({ ...wiki, ...v }).success).toBe(false)
   );
+  it('accepts omitted or false cardCluster and opts in only when true', () => {
+    const omitted = FlashcardsPlanSchema.parse(flash);
+    expect(omitted.cardCluster).toBeUndefined();
+    expect(JSON.parse(JSON.stringify(omitted))).not.toHaveProperty('cardCluster');
+    expect(FlashcardsPlanSchema.parse({ ...flash, cardCluster: false })).toMatchObject({
+      cardCluster: false,
+    });
+    const optedIn = {
+      ...flash,
+      title: 'Topic',
+      cardCluster: true as const,
+      newCards: [card, { ...card, key: 'c2' }],
+    };
+    expect(FlashcardsPlanSchema.parse(optedIn).cardCluster).toBe(true);
+    const envelope = FlashcardsApplySchema.parse({
+      schemaVersion: 1,
+      plan: flash,
+      idempotencyKey: 'batch',
+    });
+    expect(envelope.plan.cardCluster).toBeUndefined();
+    expect(JSON.parse(JSON.stringify(envelope.plan))).not.toHaveProperty('cardCluster');
+    expect(
+      FlashcardsApplySchema.parse({
+        schemaVersion: 1,
+        plan: optedIn,
+        idempotencyKey: 'batch',
+      }).plan.cardCluster
+    ).toBe(true);
+    for (const plan of [
+      { ...flash, cardCluster: true },
+      { ...optedIn, title: undefined },
+      { ...flash, cardCluster: 'yes' },
+      { ...flash, cardCluster: 1 },
+    ])
+      expect(FlashcardsPlanSchema.safeParse(plan).success).toBe(false);
+  });
   it('supports guarded patches/reuse and exact existing nodes', () => {
     expect(
       FlashcardsPlanSchema.safeParse({ ...flash, newCards: [], answerPatches: [patch] }).success
