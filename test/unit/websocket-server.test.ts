@@ -897,3 +897,38 @@ describe('WebSocketServer - Request/Response Logging', () => {
     );
   });
 });
+
+describe('SDK hello metadata lifecycle', () => {
+  it('exposes accepted identity only and clears it on reconnect', async () => {
+    const { wsServer, port } = await createStartedServer({ mockLogger: createMockLogger() });
+    let client: WebSocket | undefined;
+    try {
+      expect(wsServer.getSdkIdentity()).toBeNull();
+      client = await openWebSocket(port);
+      const ready = new Promise<void>((resolve) => wsServer.onClientConnect(resolve));
+      client.send(
+        JSON.stringify({
+          type: 'hello',
+          version: TEST_BRIDGE_VERSION,
+          sdkVersion: '0.0.46',
+          sdkCatalogHash: 'a'.repeat(64),
+        })
+      );
+      await ready;
+      expect(wsServer.getSdkIdentity()).toEqual({
+        sdkVersion: '0.0.46',
+        sdkCatalogHash: 'a'.repeat(64),
+      });
+      const closed = new Promise<void>((resolve) => wsServer.onClientDisconnect(resolve));
+      client.close();
+      await closed;
+      expect(wsServer.getSdkIdentity()).toBeNull();
+      client = await connectAcceptedClient(wsServer, port);
+      expect(wsServer.getSdkIdentity()).toBeNull();
+    } finally {
+      client?.close();
+      await wsServer.stop();
+      expect(wsServer.getSdkIdentity()).toBeNull();
+    }
+  });
+});

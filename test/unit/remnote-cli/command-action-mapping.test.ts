@@ -1,3 +1,9 @@
+vi.mock('../../../src/remnote-cli/client/sdk-capability-cache.js', () => ({
+  getSdkCapabilities: async (client: McpServerClient) => ({
+    ...((await client.execute('get_sdk_capabilities', {})) as Record<string, unknown>),
+    sdkCatalogHash: 'a'.repeat(64),
+  }),
+}));
 import { afterEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -242,6 +248,7 @@ describe('command bridge action mapping', () => {
     expect(executeSpy).toHaveBeenNthCalledWith(1, 'get_sdk_capabilities', {});
     expect(executeSpy).toHaveBeenNthCalledWith(2, 'sdk_call', {
       capability: 'rem:setText',
+      expectedCatalogHash: 'a'.repeat(64),
       targetId: 'rem-1',
       args: ['Title'],
     });
@@ -273,6 +280,7 @@ describe('command bridge action mapping', () => {
     expect(executeSpy).toHaveBeenNthCalledWith(1, 'get_sdk_capabilities', {});
     expect(executeSpy).toHaveBeenNthCalledWith(2, 'sdk_call', {
       capability: 'namespace:messaging.broadcast',
+      expectedCatalogHash: 'a'.repeat(64),
       args: [{ value: 1 }],
     });
     executeSpy.mockRestore();
@@ -300,6 +308,7 @@ describe('command bridge action mapping', () => {
     );
     expect(executeSpy).toHaveBeenNthCalledWith(2, 'sdk_call', {
       capability: 'card:remove',
+      expectedCatalogHash: 'a'.repeat(64),
       targetId: 'card-1',
       allowDestructive: true,
     });

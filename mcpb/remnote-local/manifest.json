@@ -21,6 +21,22 @@
   },
   "tools": [
     {
+      "name": "remnote_flashcards_apply",
+      "description": "Preview (dryRun=true by default) or apply a bounded exact-ID flashcard plan with structured answer segments, hash-guarded answer patches, and metadata-only idempotency receipts. Requires at least one new/patch/reused card; two or more new cards require a cluster title. Optional plan.cardCluster is a boolean and defaults off when omitted; false also stays off. Only true opts into the Card Cluster (cc) powerup, which requires a title and at least two new cards. Applies only to the explicit existing dailyRemId after native dailyDocument type validation. No date lookup or daily-document creation. No date scalar is supplied: ID/type cannot prove calendar freshness. The caller resolves/revalidates the intended date before a new batch and after midnight; replay keeps the original recorded diary. Every SDK mutation rechecks the live write gate immediately before its call, after awaited reads. No delete, replace, or move. Verify the receipt; partial/unknown/conflict/incomplete never means success and must not trigger blind replay."
+    },
+    {
+      "name": "remnote_wiki_apply",
+      "description": "Preview (dryRun=true by default) or apply a bounded exact-ID WIKI page plan, local pageKey references, and hash-guarded node/answer patches. Existing page titles must match. New nodes forbid hashes; existing nodes require hashes. Known-created Wiki objects must remain ordinary, plain, untagged non-card text before mutation. Every SDK mutation rechecks the live write gate immediately before its call, after awaited reads. Existing grouped-index entries are found through the full bounded tree and retain their parent; a missing/new grouped entry fails before writes and requires an explicit section-targeted fallback. No date lookup or daily-document creation. Metadata-only idempotency receipts; no delete, replace, move, or transactional rollback guarantee. Verify the receipt; never blindly replay partial or unknown writes."
+    },
+    {
+      "name": "remnote_inspect_many",
+      "description": "Read selected Rem IDs, bounded explicit subtrees, and tag inverse membership in one deduplicated receipt (at least one nonempty selector is required) with structure, references, powerups, native cards, and raw-text hashes. Raw text/title/backText/aliases are included only for explicit remIds; subtree and tag-only objects are metadata-only. Live observations are not an atomic snapshot; incomplete receipts cannot prove absence. Read-only, no date lookup or content cache."
+    },
+    {
+      "name": "remnote_verify_scope",
+      "description": "Read a fresh bounded context and verify explicit parent, type, tag/inverse, powerup, reference, child, ancestor, and scoped card expectations. Scope checks require subtreeRootIds and inverse tag checks require tagRemIds. Missing or incomplete evidence never passes; this tool does not mutate RemNote."
+    },
+    {
       "name": "remnote_create_note",
       "description": "Create a new note in RemNote with optional content, parent, exact tag Rem IDs, and real aliases on an explicit title/root Rem. Supports hierarchical markdown, flashcard syntax (e.g. \"- Term :: Definition\"), and exact inline Rem references as [[id:<remId>]]. At least one of title or content must be provided. Recommended preflight once per session: remnote_status."
     },

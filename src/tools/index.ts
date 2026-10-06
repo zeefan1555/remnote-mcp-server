@@ -1,6 +1,12 @@
+import { InspectManySchema, VerifyScopeSchema } from '../schemas/composite-schemas.js';
+import { FlashcardsApplySchema, WikiApplySchema } from '../schemas/task-schemas.js';
+import { INSPECT_MANY_TOOL, VERIFY_SCOPE_TOOL } from './composite.js';
+import { FLASHCARDS_APPLY_TOOL, WIKI_APPLY_TOOL } from './task.js';
+export { INSPECT_MANY_TOOL, VERIFY_SCOPE_TOOL } from './composite.js';
+export { FLASHCARDS_APPLY_TOOL, WIKI_APPLY_TOOL } from './task.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { WebSocketServer } from '../websocket-server.js';
+import { WebSocketServer, MAX_REQUEST_TIMEOUT_MS } from '../websocket-server.js';
 import { CreateNoteSchema } from '../schemas/remnote-schemas.js';
 import { SearchSchema } from '../schemas/remnote-schemas.js';
 import { SearchByTagSchema } from '../schemas/remnote-schemas.js';
@@ -1527,13 +1533,23 @@ export const GET_SDK_CAPABILITIES_TOOL = {
     'List the RemNote Plugin SDK capabilities exposed by the connected bridge, including their remnote-cli group and command names, signatures, status, mode, and any unavailability reason.',
   inputSchema: {
     type: 'object' as const,
-    properties: {},
+    properties: {
+      identityOnly: {
+        type: 'boolean',
+        description:
+          'Return live version/hash identity without the catalog body or a bridge request',
+      },
+    },
     additionalProperties: false,
   },
   outputSchema: {
     type: 'object' as const,
     properties: {
       sdkVersion: { type: 'string', description: 'RemNote Plugin SDK version' },
+      sdkCatalogHash: { type: 'string', pattern: '^[a-f0-9]{64}$' },
+      serverVersion: { type: 'string' },
+      bridgeVersion: { type: 'string' },
+      identityOnly: { type: 'boolean' },
       capabilities: {
         type: 'array',
         items: {
@@ -1560,7 +1576,7 @@ export const GET_SDK_CAPABILITIES_TOOL = {
         },
       },
     },
-    required: ['sdkVersion', 'capabilities'],
+    required: ['sdkVersion', 'sdkCatalogHash', 'serverVersion', 'bridgeVersion', 'capabilities'],
     additionalProperties: false,
   },
 };
@@ -1572,6 +1588,11 @@ export const SDK_CALL_TOOL = {
   inputSchema: {
     type: 'object' as const,
     properties: {
+      expectedCatalogHash: {
+        type: 'string',
+        pattern: '^[a-f0-9]{64}$',
+        description: 'Expected live catalog hash; stale metadata fails before invocation',
+      },
       capability: {
         type: 'string',
         minLength: 1,
@@ -1672,6 +1693,10 @@ export const PLAYBOOK_TOOL = {
 };
 
 export const ALL_TOOLS = [
+  FLASHCARDS_APPLY_TOOL,
+  WIKI_APPLY_TOOL,
+  INSPECT_MANY_TOOL,
+  VERIFY_SCOPE_TOOL,
   CREATE_NOTE_TOOL,
   SEARCH_TOOL,
   SEARCH_BY_TAG_TOOL,
@@ -1753,6 +1778,27 @@ export function registerAllTools(
         | undefined;
 
       switch (toolName) {
+        case 'remnote_inspect_many': {
+          const args = InspectManySchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('inspect_many', args, MAX_REQUEST_TIMEOUT_MS);
+          break;
+        }
+        case 'remnote_verify_scope': {
+          const args = VerifyScopeSchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('verify_scope', args, MAX_REQUEST_TIMEOUT_MS);
+          break;
+        }
+        case 'remnote_flashcards_apply': {
+          const args = FlashcardsApplySchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('flashcards_apply', args, MAX_REQUEST_TIMEOUT_MS);
+          break;
+        }
+        case 'remnote_wiki_apply': {
+          const args = WikiApplySchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('wiki_apply', args, MAX_REQUEST_TIMEOUT_MS);
+          break;
+        }
+
         case 'remnote_create_note': {
           const args = CreateNoteSchema.parse(request.params.arguments);
           result = await wsServer.sendRequest('create_note', args);
@@ -1804,7 +1850,37 @@ export function registerAllTools(
 
         case 'remnote_get_sdk_capabilities': {
           const args = GetSdkCapabilitiesSchema.parse(request.params.arguments);
-          result = await wsServer.sendRequest('get_sdk_capabilities', args);
+          const sdkIdentity = wsServer.getSdkIdentity();
+          const bridgeVersion = wsServer.getBridgeVersion();
+          if (!wsServer.isConnected() || !sdkIdentity || !bridgeVersion)
+            throw new Error(
+              'Live SDK identity is unavailable; reconnect a matching bridge before using SDK capabilities'
+            );
+          const identity = {
+            ...sdkIdentity,
+            serverVersion: wsServer.getServerVersion(),
+            bridgeVersion,
+          };
+          if (args.identityOnly) {
+            result = { ...identity, capabilities: [], identityOnly: true };
+            break;
+          }
+          const catalog = (await wsServer.sendRequest('get_sdk_capabilities', {})) as Record<
+            string,
+            unknown
+          >;
+          const current = wsServer.getSdkIdentity();
+          if (
+            !current ||
+            current.sdkCatalogHash !== sdkIdentity.sdkCatalogHash ||
+            current.sdkVersion !== sdkIdentity.sdkVersion ||
+            wsServer.getBridgeVersion() !== bridgeVersion ||
+            catalog.sdkCatalogHash !== sdkIdentity.sdkCatalogHash ||
+            catalog.sdkVersion !== sdkIdentity.sdkVersion ||
+            !Array.isArray(catalog.capabilities)
+          )
+            throw new Error('Live SDK catalog identity changed; retry with a fresh identity');
+          result = { ...catalog, ...identity };
           break;
         }
 
@@ -1916,7 +1992,7 @@ export function registerAllTools(
           }
 
           result = {
-            playbookVersion: '1.12.0',
+            playbookVersion: '1.14.0',
             summary:
               'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, inspect native card review facts by ID or scope, manage outline folding and tagged todos, discover optional Plugin SDK capabilities, retrieve managed images, and apply safe metadata writes.',
             recommendedStatusCheck: {
@@ -1927,6 +2003,13 @@ export function registerAllTools(
             },
             decisionTree: [
               'Need connection and write-policy context? Call remnote_status first.',
+              'Need exact IDs, structure, references, powerups and native cards together? Prefer remnote_inspect_many with schemaVersion=1 and explicit remIds/subtreeRootIds/tagRemIds. Only explicit remIds return title/text/aliases; metadata includes contentIncluded and textHash. Read windows are not atomic; inspect complete/errors.',
+              'Need to verify structural/card expectations? Use remnote_verify_scope with explicit expectations, subtreeRootIds for whole-scope proof and tagRemIds for inverse membership. Only status=passed succeeds; never narrow required WIKI/full-card scopes merely to pass.',
+              'Need a bounded flashcard or WIKI workflow? Preview remnote_flashcards_apply or remnote_wiki_apply with dryRun=true, exact-ID plans, stable idempotencyKey and expectedTextHash for patches. Apply only after approval. Only complete verified receipts mean applied success. Use ids/facts without guessing creation order; semantic text still requires exact-ID review. Never blindly replay partial/unknown/conflict/incomplete writes. No delete/replace/move or rollback guarantee.',
+              'Flashcard Card Cluster (cc) is opt-in via optional plan.cardCluster. Omit the field or set false to leave cc off. Set true only with a title and at least two new cards; the bridge adds cc only then.',
+              'Flashcard composites use an explicit existing dailyRemId and validate native dailyDocument type, with no date lookup or daily-document creation. ID/type cannot prove calendar freshness: the caller resolves/revalidates the intended date before a new batch and after midnight; replay retains the original recorded diary.',
+              'Task setters recheck the live write gate immediately before each SDK mutation after awaited reads. Known-created Wiki objects must remain ordinary, plain, untagged non-card text. Existing grouped-index entries are searched through the full bounded tree; a missing/new grouped entry fails before writes and requires an explicit section-targeted fallback.',
+
               'Need an embedded RemNote-managed image? Call remnote_read_note with includeMediaMetadata=true, then call remnote_get_media with the returned remId, field, and mediaId.',
               'Need to orient across the KB? Use remnote_search with contentMode="structured", view="compact", depth=1, childLimit=500.',
               'Need candidate flashcards for incremental learning? Use remnote_search with cardsOnly=true and includeReviewStats=true; compare content and native review facts without inventing a mastery score.',

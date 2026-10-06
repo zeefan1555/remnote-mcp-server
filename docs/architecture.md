@@ -96,3 +96,19 @@ Potential architectural improvements for consideration:
 - **Health check endpoint:** HTTP endpoint for monitoring tools to verify server health
 - **Batch operations:** Support bundling multiple RemNote operations into a single request/response
 - **Streaming responses:** For large result sets, stream data back incrementally rather than buffering entire response
+
+## Bounded composites and SDK metadata (0.24.0)
+
+Four actions map directly across CLI/MCP/bridge: context→inspect_many, verify scope→verify_scope, flashcards
+apply→flashcards_apply, wiki apply→wiki_apply. Read receipts are non-atomic read windows with request-local dedup,
+explicit completeness/errors, contentIncluded/textHash and raw text only for explicit remIds. Plans use bounded typed
+segments, stale-text hashes, preview defaults and metadata-only journals. Flashcard `cardCluster` is an optional
+boolean that defaults off when omitted; only `true` opts into the Card Cluster powerup. Task receipts return semantic IDs and
+selected hash/card-ID facts; neither receipt nor SDK cache is a persisted KB-text copy.
+
+Bridge hello advertises sdkVersion/sdkCatalogHash. identityOnly capability discovery reads accepted live hello without
+a bridge round trip; CLI format 2 metadata caching validates exact endpoint/CLI/server/bridge/SDK/hash identity, local
+payload integrity and the original ordered catalog hash. SDK invocation rechecks expectedCatalogHash before execution.
+All composites wait at most 60 seconds on bridge, 65 seconds on CLI; no input timeout. See [read contracts](guides/read-receipts.md)
+and [task contracts](guides/task-plans.md) for no-date-lookup semantics, original-diary replay, fresh live setter gates,
+plain/untagged Wiki guards, and complete bounded grouped-index ownership checks.

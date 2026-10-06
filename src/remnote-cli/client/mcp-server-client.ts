@@ -11,6 +11,10 @@ export const BRIDGE_ACTION_TO_TOOL: Readonly<Record<string, string>> = {
   search: 'remnote_search',
   search_by_tag: 'remnote_search_by_tag',
   read_note: 'remnote_read_note',
+  inspect_many: 'remnote_inspect_many',
+  verify_scope: 'remnote_verify_scope',
+  flashcards_apply: 'remnote_flashcards_apply',
+  wiki_apply: 'remnote_wiki_apply',
   get_review_stats: 'remnote_get_review_stats',
   set_outline_collapsed: 'remnote_set_outline_collapsed',
   list_todos: 'remnote_list_todos',
@@ -30,6 +34,13 @@ export const BRIDGE_ACTION_TO_TOOL: Readonly<Record<string, string>> = {
   get_status: 'remnote_status',
   read_table: 'remnote_read_table',
 };
+
+const COMPOSITE_ACTIONS = new Set([
+  'inspect_many',
+  'verify_scope',
+  'flashcards_apply',
+  'wiki_apply',
+]);
 
 type ToolContent = Array<{ type: string; text?: string; data?: string; mimeType?: string }>;
 
@@ -54,7 +65,10 @@ export class McpServerClient {
     }
 
     await this.connect();
-    const result = await this.client!.callTool({ name: toolName, arguments: payload });
+    const request = { name: toolName, arguments: payload };
+    const result = COMPOSITE_ACTIONS.has(action)
+      ? await this.client!.callTool(request, undefined, { timeout: 65000 })
+      : await this.client!.callTool(request);
 
     if (result.isError) {
       throw new Error(this.extractText(result));
@@ -173,10 +187,10 @@ export class McpServerClient {
   }
 }
 
-function normalizeMcpUrl(value: string): string {
-  const trimmed = value.trim().replace(/\/+$/, '');
-  if (trimmed.endsWith('/mcp')) {
-    return trimmed;
-  }
-  return `${trimmed}/mcp`;
+export function normalizeMcpUrl(value: string): string {
+  const url = new URL(value.trim());
+  const path = url.pathname.replace(/\/+$/, '');
+  url.pathname = path.endsWith('/mcp') ? path : `${path}/mcp`;
+  url.hash = '';
+  return url.toString();
 }

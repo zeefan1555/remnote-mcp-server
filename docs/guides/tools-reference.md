@@ -19,6 +19,10 @@ JSON in a top-level `content` text block for compatibility with older clients an
 | `remnote_search` | Search knowledge base | Finding notes or card candidates with optional review facts |
 | `remnote_search_by_tag` | Search by exact tag Rem ID | Finding ancestor context for tagged notes |
 | `remnote_read_note` | Read note content | Retrieving details, reading hierarchies |
+| `remnote_inspect_many` | Bounded exact-ID read receipts | Task-level evidence and guarded execution |
+| `remnote_verify_scope` | Fresh scoped verification | Task-level evidence and guarded execution |
+| `remnote_flashcards_apply` | Preview/apply guarded flashcard plans | Task-level evidence and guarded execution |
+| `remnote_wiki_apply` | Preview/apply guarded Wiki plans | Task-level evidence and guarded execution |
 | `remnote_get_review_stats` | Read native card review facts | Review-state inspection by IDs, root, tag, or today |
 | `remnote_set_outline_collapsed` | Collapse or expand an outline | Verified bulk folding with dry-run support |
 | `remnote_list_todos` | List tagged todos | Read exact-tag tasks and native checkbox state |
@@ -989,3 +993,31 @@ AI agents can chain multiple tools:
 ## Need Help?
 
 - [GitHub Issues](https://github.com/robert7/remnote-mcp-server/issues) - Report bugs or ask questions
+
+## Task Composites (schemaVersion=1)
+
+| CLI | MCP tool | Bridge action |
+|-----|----------|---------------|
+| `context --request <path or ->` | `remnote_inspect_many` | `inspect_many` |
+| `verify scope --expect <path or ->` | `remnote_verify_scope` | `verify_scope` |
+| `flashcards apply --plan <path or -> --idempotency-key KEY [--apply]` | `remnote_flashcards_apply` | `flashcards_apply` |
+| `wiki apply --plan <path or -> --idempotency-key KEY [--apply]` | `remnote_wiki_apply` | `wiki_apply` |
+
+[Read receipts](read-receipts.md) documents every selector/check/receipt field and [task plans](task-plans.md) every
+inner plan, bound, text segment and apply receipt. Flashcard `cardCluster` is an optional boolean and defaults off
+when omitted; only `true` opts into the Card Cluster (`cc`) powerup, which requires a title and at least two new cards.
+Leaf `--help` includes examples and schemas for installed agents.
+Read input is the whole request; apply files contain only the inner plan. Preview is default. Full receipts precede
+nonzero exits on failed/incomplete reads or nonverified apply. Required WIKI/card proof scopes must not be narrowed
+merely to pass. Raw context title/text/backText/aliases are limited to explicit remIds; task ids/facts contain metadata.
+
+Preview/apply never look up dates or create daily documents. Native dailyDocument type does not prove calendar
+freshness without a date scalar. Caller revalidates intended dates before new batches/after midnight; replay keeps
+the original diary. Live write gates are rechecked immediately before each SDK mutation after awaits; known-created
+Wiki objects must remain plain/ordinary/untagged non-card. Existing grouped-index entries use the full bounded tree;
+missing/new grouped entries fail before writes and require reviewed exact-section fallback. Do not flatten/guess.
+
+SDK discovery additionally accepts optional `identityOnly:true`, returning live version/hash identity and empty
+capabilities without a bridge round trip. Normal results include sdkVersion/sdkCatalogHash/serverVersion/bridgeVersion.
+SDK calls accept optional lowercase 64-hex expectedCatalogHash; mismatches fail closed before invocation. The CLI
+cache is metadata-only, validates payload and official digests, and has no offline fallback.

@@ -25,3 +25,6 @@ guide.
 This example uses [Codex.app](https://developers.openai.com/codex/app) AI agent but it should work with any agent or MCP client.
 
 ![Agent validation smoke test pass in Codex](../images/agent-validation-smoke-test-pass.jpg)
+
+The MCP smoke prompt includes schema-1 context/verification and preview-only task composites. Real task applies
+need separate authorization; incomplete receipts, raw-content boundaries and metadata-only ids/facts must be checked.

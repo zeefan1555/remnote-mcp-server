@@ -275,3 +275,40 @@ this sequence in order:
 - `--text` is useful for quick human checks.
 - Reference command docs when unsure:
   `https://github.com/robert7/remnote-mcp-server/blob/main/docs/guides/remnote-cli-command-reference.md`
+
+## Bounded context and task plans
+
+Prefer `context --request <path|->` to repeated known-ID reads, then `verify scope --expect <path|->` for fresh proof.
+Use schemaVersion=1, exact remIds/subtreeRootIds/tagRemIds, bounded maxRems/ancestorDepth. Raw content appears only for
+explicit remIds; select raw text narrowly after broad metadata discovery. Nine checks: parent, remType, tag, powerup,
+references, children, ancestor, cardRemIds, zeroCards. Scope checks require explicit subtreeRootIds, inverse tag checks
+require tagRemIds. Incomplete evidence never passes; keep REQUIRED whole-WIKI/full-card scope intact.
+
+`flashcards apply` and `wiki apply` require --plan <path|-> (inner schemaVersion=1 plan) and a stable --idempotency-key.
+Optional flashcards field `cardCluster` is a boolean and defaults off when omitted. `false` also leaves Card Cluster
+off. Set `cardCluster` true only to opt into the `cc` powerup; that requires a title and at least two new cards.
+Preview first; use --apply only after the existing confirm-write procedure. TextSegments accept literals and exact
+{remId}; Wiki additionally accepts {pageKey} declared in its plan. Existing text patches require current textHash; new
+Wiki nodes omit remId/hash. Keys are unique, input bounded 100 KiB, aggregate ids/facts budget 1000 incl patch card/answer
+pairs. See task reference for exact formulas. No deletion, replacement, movement or transactional rollback guarantee.
+
+Composites NEVER look up dates or create daily documents. Explicit existing dailyRemId must have native dailyDocument
+type, but there is no date scalar and this does not prove calendar freshness. Resolve/revalidate the intended date
+before a new batch and after midnight; replay always uses its original recorded diary. Task setters check live write
+gates immediately before SDK mutations after awaited reads. Known-created/recovered Wiki objects must remain
+ordinary/plain/untagged non-card before mutation. Grouped-index existing entries require full bounded tree search and
+retain their parent. Missing/new grouped entries fail before writes; use an explicitly reviewed exact-section fallback,
+never flatten, guess, or shrink the search. Partition/plan canonical-name/alias guards do not replace agent semantic
+deduplication. Patch/reference-only pages:[] and no-op Wiki work do not log.
+
+Use receipt ids semantic map, never creation order. facts contain only {remId,textHash,cardIds,reviewHash} for selected
+owned/changed/reused objects; use these for next-stage hashes/card IDs without another broad reconstruction read.
+Semantic final text review still needs selected exact-ID reads. Persist metadata evidence, never KB text/history.
+Preview success requires complete/preview/no errors; applied success requires complete/verified/no errors. Preserve
+partial/unknown/incomplete/conflict receipts, reconcile exact outcomes with the same plan/key, and never blindly retry
+or bypass uncertainty with a new key. Bridge deadline 60s and CLI 65s; timeout is not proof of no mutation.
+
+SDK format 2 discovery cache validates fresh live identity plus payload/official catalog hashes. Only metadata is cached;
+no content, permissions or offline fallback. Full shapes/examples are available in leaf --help and these references:
+https://github.com/robert7/remnote-mcp-server/blob/main/docs/guides/read-receipts.md
+https://github.com/robert7/remnote-mcp-server/blob/main/docs/guides/task-plans.md
